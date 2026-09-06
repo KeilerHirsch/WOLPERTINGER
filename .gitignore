@@ -26,3 +26,6 @@ TestResults/
 coverage/
 *.coverage
 *.coveragexml
+
+# Local git worktrees
+.worktrees/
