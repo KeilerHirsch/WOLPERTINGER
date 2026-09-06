@@ -1009,5 +1009,3 @@ Expected: all tests/proofs pass and the worktree is clean.
 When Task 12 passes, **Stage 1 is complete**. Do not expand the same branch into voice, UI, plugins, CAPI, EDDN, broader journal coverage, or a general Elite domain model. Open the next design/plan only for the next user-visible capability built on the proven slice.
 
 If implementation reveals a concrete incompatibility with the approved foundation spec, stop at the failing task, record the evidence, and reopen only that specific design decision. Do not restart general FuE.
-
-
