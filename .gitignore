@@ -1,0 +1,28 @@
+# .NET build output
+bin/
+obj/
+artifacts/
+
+# IDE / editor state
+.vs/
+.idea/
+.vscode/
+*.user
+*.suo
+
+# Local secrets and environment files
+.env
+.env.*
+!.env.example
+secrets.json
+
+# OS noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Test / coverage output
+TestResults/
+coverage/
+*.coverage
+*.coveragexml
