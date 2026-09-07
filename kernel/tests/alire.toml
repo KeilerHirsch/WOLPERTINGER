@@ -1,0 +1,11 @@
+name = "wolpertinger_kernel_tests"
+version = "0.1.0-dev"
+description = "WOLPERTINGER trusted-kernel runtime tests"
+licenses = "EUPL-1.2"
+
+[[depends-on]]
+wolpertinger_kernel = "*"
+aunit = "=26.0.0"
+
+[[pins]]
+wolpertinger_kernel = { path = ".." }
