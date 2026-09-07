@@ -106,7 +106,7 @@ gprbuild --version
 gnatprove --version
 ```
 
-Expected versions: `10.0.111`, `2.1.1`, `16.1.0`, `26.0.1`, and `16.1.0` respectively.
+Expected: .NET `10.0.111`, Alire `2.1.1`, GNAT native `16.1.0`, Alire toolchain package `gprbuild 26.0.1`, and GNATprove `16.1.0`. Note: the official Alire `gprbuild 26.0.1` package currently wraps upstream binary release `gprbuild-26.0.0-1`, so `gprbuild --version` self-reports `26.0.0`; verify the Alire package pin with `alr toolchain` as the reproducibility check.
 
 - [ ] **Step 3: Create the .NET solution and projects**
 

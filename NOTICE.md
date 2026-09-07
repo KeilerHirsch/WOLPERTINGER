@@ -21,3 +21,7 @@ Copyright © 2026 KeilerHirsch. WOLPERTINGER core source code is licensed under 
 That licence does not automatically relicense third-party data, APIs, documentation, game assets, trademarks, community datasets, or dependencies. Each external source retains its own provenance, licence, terms, and rights.
 
 A detailed third-party and data-provenance inventory will be created during the research phase before such material becomes part of a distributable implementation.
+
+## Third-party implementation dependencies
+
+- `cbor_ada` 0.3.0, pinned to commit `b448c366117ff9f6c050b13d4fe609bb79495759`, is used as a third-party CBOR dependency and remains licensed under Apache-2.0. Its source and licence are not relicensed as EUPL-1.2.
