@@ -15,4 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Wolpertinger.Edge\Wolpertinger.Edge.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\fixtures\contracts\v1\*.hex" Link="fixtures\contracts\v1\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>
