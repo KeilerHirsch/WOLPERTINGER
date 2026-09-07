@@ -2,11 +2,17 @@
 
 **Wide-Area Operations & Logistics Platform for Exploration, Routing, Telemetry, Intelligence, Navigation, Guidance, Engineering, and Reconnaissance**
 
-## Your copilot should know what to do.
+<p align="center">
+  <img src="docs/assets/wolpertinger-concept-ui.webp" alt="WOLPERTINGER concept UI showing a unified Elite Dangerous companion workspace" width="100%">
+</p>
+
+<p align="center"><sub><strong>Concept UI — early development.</strong> The visual communicates the intended workflow and product direction, not implemented feature status.</sub></p>
+
+## Your shipboard assistant should know what to do.
 
 WOLPERTINGER is an open-source companion platform for **Elite Dangerous**, built around a simple idea:
 
-**A copilot should reduce your workload — not become another workload.**
+**A shipboard assistant should reduce your workload — not become another workload.**
 
 It is designed to follow the commander, understand the current game state, surface what actually matters, and stay quiet when nothing does.
 
