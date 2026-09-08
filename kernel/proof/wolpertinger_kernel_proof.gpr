@@ -1,0 +1,17 @@
+project Wolpertinger_Kernel_Proof is
+   for Source_Dirs use ("../src");
+   for Object_Dir use "obj";
+   for Source_Files use
+     ("wolpertinger_types.ads",
+      "wolpertinger_bounded_text.ads",
+      "wolpertinger_bounded_text.adb",
+      "wolpertinger_state.ads",
+      "wolpertinger_state.adb",
+      "wolpertinger_facts.ads",
+      "wolpertinger_engine.ads",
+      "wolpertinger_engine.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use ("-gnat2022", "-gnata");
+   end Compiler;
+end Wolpertinger_Kernel_Proof;
