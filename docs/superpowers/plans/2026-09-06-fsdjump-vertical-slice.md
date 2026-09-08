@@ -729,7 +729,7 @@ git commit -m "feat: supervise active and shadow kernels"
 **Interfaces:**
 - Consumes the fenced Active `JumpFact` returned by `KernelSupervisor`.
 - Produces a plain headless `CopilotOutput` with no AI or presentation dependency.
-- [ ] **Step 1: Write failing context/output tests**
+- [x] **Step 1: Write failing context/output tests**
 
 For one fixed `JumpFact`, assert one `Surface=true` decision with reason code `JumpCompleted`, channel `Display`, and no speech/AI side effect. Assert identical input produces byte-for-byte identical UTF-8 output text.
 
@@ -740,11 +740,11 @@ Assert.Equal("JumpCompleted", decision.ReasonCode);
 Assert.Equal(OutputChannel.Display, decision.Channel);
 ```
 
-- [ ] **Step 2: Implement the first deterministic policy**
+- [x] **Step 2: Implement the first deterministic policy**
 
 The v0 policy deliberately has one rule: a newly applied authoritative `JumpFact` is display-worthy. Idempotent kernel results do not create a second output.
 
-- [ ] **Step 3: Implement invariant formatting without floating point**
+- [x] **Step 3: Implement invariant formatting without floating point**
 
 Format using `Decimal64.ToString()` and stable punctuation:
 
@@ -754,7 +754,7 @@ Jump complete: <StarSystem> - <JumpDistance> ly, fuel <FuelLevel> t.
 
 `CopilotOutput` also carries the observation cursor, evidence digest/reference, state digest, and reason code so diagnostics can answer why it was emitted.
 
-- [ ] **Step 4: Run tests and commit**
+- [x] **Step 4: Run tests and commit**
 
 ```powershell
 dotnet test tests/Wolpertinger.Edge.Tests/Wolpertinger.Edge.Tests.csproj -c Release --filter "FullyQualifiedName~Context|FullyQualifiedName~Output"
@@ -775,22 +775,22 @@ git commit -m "feat: add deterministic jump copilot output"
 - `ProjectionRebuilder.RebuildAsync(...)` deletes/recreates the database from replay-produced outputs.
 - No kernel or replay code reads SQLite to determine authoritative truth.
 
-- [ ] **Step 1: Write failing projection tests**
+- [x] **Step 1: Write failing projection tests**
 
 Assert schema creation, one latest-jump row per profile, one output row per cursor, idempotent re-application, and exact preservation of state/evidence digests.
 
-- [ ] **Step 2: Implement the minimal schema with raw SQL**
+- [x] **Step 2: Implement the minimal schema with raw SQL**
 
 Use `Microsoft.Data.Sqlite` directly; no ORM. Create `projection_meta`, `latest_jump`, and `copilot_output`. Store `SystemAddress` as invariant decimal text to avoid accidental signed conversion; store digests as 32-byte BLOBs and Decimal64 display values as canonical text.
 
-- [ ] **Step 3: Write a failing delete-and-rebuild test**
+- [x] **Step 3: Write a failing delete-and-rebuild test**
 
 Populate projections, close the database, delete `projections.db`, run the rebuilder from deterministic replay outputs, and assert the recreated logical rows match the original rows exactly.
 
-- [ ] **Step 4: Implement rebuild as an explicit disposable-store operation**
+- [x] **Step 4: Implement rebuild as an explicit disposable-store operation**
 
 The rebuilder always creates a fresh schema and re-applies replay outputs in cursor order. It never attempts to recover authoritative state from SQLite.
-- [ ] **Step 5: Run projection tests and commit**
+- [x] **Step 5: Run projection tests and commit**
 
 ```powershell
 dotnet test tests/Wolpertinger.Edge.Tests/Wolpertinger.Edge.Tests.csproj -c Release --filter FullyQualifiedName~Projections

@@ -5,6 +5,7 @@ namespace Wolpertinger.Edge.Facts;
 
 public sealed record JumpFact(
     ObservationCursor Cursor,
+    ProfileKey Profile,
     EvidenceReference EvidenceReference,
     FixedBytes32 EvidenceDigest,
     FixedBytes32 StateDigest,

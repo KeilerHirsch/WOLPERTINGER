@@ -15,9 +15,15 @@ public sealed class CopilotOutputFormatter
         var text = $"Jump complete: {fact.StarSystem} - {fact.JumpDistance} ly, fuel {fact.FuelLevel} t.";
         return new CopilotOutput(
             fact.Cursor,
+            fact.Profile,
             fact.EvidenceReference,
             fact.EvidenceDigest,
             fact.StateDigest,
+            fact.SystemAddress,
+            fact.StarSystem,
+            fact.JumpDistance,
+            fact.FuelUsed,
+            fact.FuelLevel,
             decision.ReasonCode,
             text);
     }
