@@ -29,3 +29,11 @@ coverage/
 
 # Local git worktrees
 .worktrees/
+
+# Alire workspace/build state
+kernel/alire/
+kernel/config/
+kernel/tests/alire/
+kernel/tests/config/
+kernel/proof/alire/
+kernel/proof/config/

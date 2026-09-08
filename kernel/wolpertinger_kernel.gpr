@@ -1,0 +1,12 @@
+with "cbor_ada";
+
+project Wolpertinger_Kernel is
+   for Source_Dirs use ("src");
+   for Object_Dir use "obj";
+   for Exec_Dir use "bin";
+   for Main use ("wolpertinger_kernel_main.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use ("-gnat2022", "-gnata", "-gnatwa");
+   end Compiler;
+end Wolpertinger_Kernel;

@@ -1,0 +1,11 @@
+name = "wolpertinger_kernel_proof"
+version = "0.1.0-dev"
+description = "WOLPERTINGER trusted-kernel SPARK proof environment"
+licenses = "EUPL-1.2"
+
+[[depends-on]]
+wolpertinger_kernel = "*"
+gnatprove = "=16.1.0"
+
+[[pins]]
+wolpertinger_kernel = { path = ".." }
