@@ -17,5 +17,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\fixtures\contracts\v1\*.hex" Link="fixtures\contracts\v1\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\fixtures\journal\*.jsonl" Link="fixtures\journal\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>
