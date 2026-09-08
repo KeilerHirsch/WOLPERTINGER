@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  windows-foundation:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 10.0.111
+      - uses: alire-project/setup-alire@v6.0.0
+        with:
+          version: 2.1.1
+          toolchain: gnat_native=16.1.0 gprbuild=26.0.1
+
+      - name: Build trusted kernel
+        shell: pwsh
+        run: |
+          Push-Location kernel
+          alr build --validation
+          Pop-Location
+
+      - name: Ada runtime tests
+        shell: pwsh
+        run: |
+          Push-Location kernel/tests
+          alr build --validation
+          alr run
+          Pop-Location
+
+      - name: SPARK proof
+        shell: pwsh
+        run: |
+          Push-Location kernel/proof
+          alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all
+          Pop-Location
+
+      - name: .NET build and tests
+        shell: pwsh
+        run: |
+          dotnet restore WOLPERTINGER.slnx
+          dotnet build WOLPERTINGER.slnx -c Release --no-restore
+          dotnet test WOLPERTINGER.slnx -c Release --no-build
+          git diff --check

@@ -1,43 +1,26 @@
 # WOLPERTINGER Roadmap
 
-This roadmap is intentionally high-level. WOLPERTINGER will not accumulate implementation before the underlying product, data, legal, and architecture decisions have been researched and frozen.
+This roadmap is intentionally high-level. WOLPERTINGER builds reviewed foundations before broad feature coverage.
 
-## Phase 0 — Public foundation
+## Foundation research and architecture freeze — complete
 
-- Establish project identity, scope, licence, and clean-room boundary.
-- Publish the architectural intent without pretending unfinished features exist.
-- Collect early technical and commander feedback.
+The initial research, threat/failure modelling, source-boundary review, licence choice, deterministic data contract, replay model, and `.NET 10 + Ada/SPARK` process architecture are frozen for the first vertical slice.
 
-## Phase 1 — Research & reconnaissance
+## Stage 1 — FSDJump foundation slice
 
-- Map Frontier-supported and documented data surfaces.
-- Audit relevant Elite Dangerous community tooling and interoperability patterns.
-- Build a feature and user-need matrix across exploration, navigation, logistics, engineering, colonisation, telemetry, and voice assistance.
-- Verify data provenance, licensing, trademarks, privacy, and redistribution constraints.
-- Evaluate desktop UI, audio/STT/TTS, networking, persistence, plugins, update delivery, Linux/Steam Deck, and support diagnostics.
+**Complete.** The first retained FSDJump vertical slice is implemented and has passed the local foundation acceptance gate. The Windows CI workflow reproduces the build/test/proof gate on pushes and pull requests.
 
-## Phase 2 — Product & architecture freeze
+Implemented scope:
 
-- Canonical game-state model.
-- Data-source adapters and validation contracts.
-- Event and derived-fact model.
-- Provenance and freshness semantics.
-- Rules and recommendation engine.
-- Voice/assistant pipeline and AI trust boundary.
-- Persistence, replay, plugin, and presentation contracts.
-- UX information architecture and progressive-disclosure model.
+`Elite journal → durable raw evidence → deterministic normalized ledger → ACTIVE+SHADOW trusted state → JumpFact → deterministic output → rebuildable projection → exact replay`
 
-## Phase 3 — Implementation
+The slice also includes monotonic authority epochs, fencing, real-process Active/Shadow recovery, fail-closed numeric/identity/sequence/integrity semantics, canonical state digests, and a bounded SPARK proof boundary.
 
-Implementation begins only after the foundation has been researched and reviewed.
+## Next capability stages
 
-The first vertical slice should prove the architecture end to end:
+Only after Stage 1 closes will user-visible capability modules grow on this foundation, potentially including:
 
-`Elite event → validated input → canonical state → derived fact → relevance decision → copilot output → replay test`
-
-Later capability modules can then grow on the same foundation, including:
-
-- Copilot and voice interaction
+- Copilot and optional voice interaction
 - Exploration and exobiology
 - Navigation and expedition support
 - Engineering and material planning
@@ -45,4 +28,4 @@ Later capability modules can then grow on the same foundation, including:
 - Colonisation support
 - Community extensions through a stable plugin surface
 
-No dates or feature promises are attached yet. Research gets to change the plan before code makes changes expensive.
+These are directions, not release promises. UI, CAPI, EDDN, voice, plugins, and broader journal coverage are explicitly outside the Stage-1 branch.

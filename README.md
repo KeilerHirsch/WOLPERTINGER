@@ -5,7 +5,7 @@
 WOLPERTINGER is an open-source, local-first companion platform for **Elite Dangerous**. Its goal is simple: keep navigation, exploration, engineering context, telemetry, and shipboard assistance coherent so commanders spend less time operating menus and more time flying.
 
 > **Project status: Foundation / pre-alpha**
-> The architecture is frozen and the first retained `FSDJump` vertical slice is now being implemented. There is **no supported end-user release yet**.
+> **Stage 1 foundation is complete:** the first retained `FSDJump` vertical slice is implemented and has passed the local acceptance gate. There is **no supported end-user release yet**.
 
 <p align="center">
   <img src="docs/assets/wolpertinger-concept-ui.webp" alt="WOLPERTINGER concept UI showing route, exploration, engineering, and shipboard-assistant context in an Elite Dangerous cockpit" width="100%">
@@ -36,7 +36,7 @@ dotnet --version
 
 The pinned .NET SDK is **10.0.111**. Ada/SPARK toolchain setup and the exact implementation sequence are tracked in the [FSDJump vertical-slice plan](docs/superpowers/plans/2026-09-06-fsdjump-vertical-slice.md).
 
-If you only want to understand the design first, start with the [foundation design](docs/superpowers/specs/2026-09-06-wolpertinger-foundation-design.md) and [roadmap](ROADMAP.md).
+If you only want to understand the design first, start with the [foundation design](docs/superpowers/specs/2026-09-06-wolpertinger-foundation-design.md), the [implemented vertical-slice architecture](docs/architecture/vertical-slice-v0.md), and the [roadmap](ROADMAP.md).
 
 ## Architecture in 30 seconds
 
@@ -65,6 +65,8 @@ Ada/SPARK Trusted Kernel x2
 ```
 
 The headless authoritative path is intentionally isolated from UI, network integrations, plugins, TTS/STT, and LLMs. Raw evidence and normalized observations are durable and replayable; SQLite is only a rebuildable projection store.
+
+**Development tooling disclosure:** AI-assisted tools may be used during research, review, documentation, and implementation. They are development aids, not runtime authorities: the trusted path remains local, deterministic, replayable, and independent of cloud/LLM availability.
 
 **Foundation rule:** two kernels compute, one authority decides, one writer publishes. Identity ambiguity, sequence gaps, integrity conflicts, and unrepresentable trusted numerics fail closed instead of being guessed around.
 
