@@ -24,7 +24,7 @@ public static class GalaxyRealmResolver
 
         return major switch
         {
-            4 => GalaxyRealm.Live,
+            >= 4 => GalaxyRealm.Live,
             3 when minor == 8 => GalaxyRealm.Legacy,
             _ => GalaxyRealm.Unknown,
         };

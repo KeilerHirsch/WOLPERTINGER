@@ -13,7 +13,7 @@ public sealed class SessionIdentityTrackerTests
     [InlineData("4.2.2.0", "r300000/r0", GalaxyRealm.Live)]
     [InlineData("3.8.0.0", "r123/r0", GalaxyRealm.Legacy)]
     [InlineData("4.2.2.0", "beta/test build", GalaxyRealm.BetaOrPts)]
-    [InlineData("5.0.0", "r123/r0", GalaxyRealm.Unknown)]
+    [InlineData("5.0.0", "r123/r0", GalaxyRealm.Live)]
     public void RealmResolverIsExplicitAndBetaMarkersTakePrecedence(
         string version,
         string build,
@@ -70,6 +70,64 @@ public sealed class SessionIdentityTrackerTests
     }
 
     [Fact]
+    public void IdentityTrackingRejectsEvidenceFromNonJournalSource()
+    {
+        var tracker = new SessionIdentityTracker();
+        using var header = JsonDocument.Parse("""{"event":"Fileheader","gameversion":"4.3.0.1","part":1}""");
+        var receipt = Receipt(0, RepeatHex("77")) with { SourceKind = RawEvidenceSourceKind.FrontierApi };
+
+        Assert.Throws<InvalidDataException>(() => tracker.Observe(receipt, header.RootElement));
+        Assert.Null(tracker.CurrentBinding);
+    }
+    [Fact]
+    public void ContinuedJournalPartPreservesBoundSession()
+    {
+        var tracker = BoundTracker();
+        var before = tracker.CurrentBinding;
+        using var continued = JsonDocument.Parse("""{"event":"Continued","Part":2,"timestamp":"2026-09-08T01:00:00Z"}""");
+        _ = tracker.Observe(Receipt(2, RepeatHex("66")), continued.RootElement);
+        using var nextHeader = JsonDocument.Parse("""{"event":"Fileheader","part":2,"gameversion":"4.3.0.1","build":"r400000/r0","timestamp":"2026-09-08T01:00:01Z"}""");
+
+        var result = tracker.Observe(Receipt(3, RepeatHex("67")), nextHeader.RootElement);
+
+        Assert.Equal(SessionIdentityStatus.SessionBound, result.Status);
+        Assert.Equal(before, tracker.CurrentBinding);
+        Assert.Equal(before, new SessionBinding(result.SessionId!.Value, result.Profile!));
+        Assert.Null(result.Draft);
+    }
+
+    [Fact]
+    public void ContinuedPartMismatchStartsNewPendingSession()
+    {
+        var tracker = BoundTracker();
+        var before = tracker.CurrentBinding;
+        using var continued = JsonDocument.Parse("""{"event":"Continued","Part":2}""");
+        _ = tracker.Observe(Receipt(2, RepeatHex("68")), continued.RootElement);
+        using var nextHeader = JsonDocument.Parse("""{"event":"Fileheader","part":3,"gameversion":"4.3.0.1"}""");
+
+        var result = tracker.Observe(Receipt(3, RepeatHex("69")), nextHeader.RootElement);
+
+        Assert.Equal(SessionIdentityStatus.IdentityPending, result.Status);
+        Assert.Null(tracker.CurrentBinding);
+        Assert.NotEqual(before!.SessionId, result.SessionId);
+    }
+
+    [Fact]
+    public void ContinuedRealmMismatchStartsNewPendingSession()
+    {
+        var tracker = BoundTracker();
+        using var continued = JsonDocument.Parse("""{"event":"Continued","Part":2}""");
+        _ = tracker.Observe(Receipt(2, RepeatHex("6a")), continued.RootElement);
+        using var nextHeader = JsonDocument.Parse("""{"event":"Fileheader","part":2,"gameversion":"3.8.0.0"}""");
+
+        var result = tracker.Observe(Receipt(3, RepeatHex("6b")), nextHeader.RootElement);
+
+        Assert.Equal(SessionIdentityStatus.IdentityPending, result.Status);
+        Assert.Equal(GalaxyRealm.Legacy, result.Realm);
+        Assert.Null(tracker.CurrentBinding);
+    }
+
+    [Fact]
     public void FsdJumpBeforeBindingProducesNoAuthoritativeDraft()
     {
         var tracker = new SessionIdentityTracker();
@@ -95,6 +153,7 @@ public sealed class SessionIdentityTrackerTests
     private static RawEvidenceReceipt Receipt(ulong ordinal, string digestHex)
         => new(
             new EvidenceReference(ordinal, 0, checked((long)ordinal * 100), 100),
+            RawEvidenceSourceKind.LocalJournal,
             FixedBytes32.FromHex(digestHex),
             DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000 + (long)ordinal),
             DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_500 + (long)ordinal),

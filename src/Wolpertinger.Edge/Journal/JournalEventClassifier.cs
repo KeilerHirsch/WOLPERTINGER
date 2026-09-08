@@ -8,6 +8,7 @@ public enum JournalEventKind
     FileHeader,
     Commander,
     LoadGame,
+    Continued,
     FsdJump,
 }
 
@@ -25,6 +26,7 @@ public static class JournalEventClassifier
             "Fileheader" => JournalEventKind.FileHeader,
             "Commander" => JournalEventKind.Commander,
             "LoadGame" => JournalEventKind.LoadGame,
+            "Continued" => JournalEventKind.Continued,
             "FSDJump" => JournalEventKind.FsdJump,
             _ => JournalEventKind.Unknown,
         };

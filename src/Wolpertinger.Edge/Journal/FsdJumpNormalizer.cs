@@ -18,6 +18,10 @@ public static class FsdJumpNormalizer
         {
             throw new InvalidOperationException("FSDJump normalization requires durable raw evidence.");
         }
+        if (receipt.SourceKind != RawEvidenceSourceKind.LocalJournal)
+        {
+            throw new InvalidDataException("FSDJump normalization requires LocalJournal evidence.");
+        }
 
         if (JournalEventClassifier.Classify(root) != JournalEventKind.FsdJump)
         {
