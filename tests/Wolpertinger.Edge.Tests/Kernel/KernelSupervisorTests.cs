@@ -80,6 +80,22 @@ public sealed class KernelSupervisorTests
             () => supervisor.ApplyAsync(Observation()));
     }
     [Fact]
+    public async Task StartReplaysConfiguredLedgerToAgreementBeforeReturning()
+    {
+        var active = new FakeKernelClient(SessionResult(KernelRole.Active), Result(KernelRole.Active));
+        var shadow = new FakeKernelClient(SessionResult(KernelRole.Shadow), Result(KernelRole.Shadow));
+        var replay = new FakeReplaySource(SessionObservation(), Observation());
+        await using var supervisor = new KernelSupervisor(
+            active, shadow, new FakeEpochStore(), replay, new FakeKernelClientFactory());
+
+        await supervisor.StartAsync();
+
+        Assert.Equal(new ObservationCursor(2, 0), supervisor.Diagnostics.LastAgreedCursor);
+        Assert.Equal(Result(KernelRole.Active).StateDigest, supervisor.Diagnostics.LastAgreedDigest);
+        Assert.Equal(2, active.AppliedBytes.Count);
+        Assert.Equal(2, shadow.AppliedBytes.Count);
+    }
+    [Fact]
     public async Task DeadActiveIsPromotedBeforeNextDispatchAndEpochAdvances()
     {
         var oldActive = new FakeKernelClient(SessionResult(KernelRole.Active));

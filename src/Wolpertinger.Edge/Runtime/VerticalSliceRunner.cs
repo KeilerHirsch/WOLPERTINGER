@@ -43,7 +43,9 @@ public sealed class VerticalSliceRunner : IAsyncDisposable
         var supervisor = KernelSupervisor.Create(new KernelProcessOptions(kernelExecutable, TimeSpan.FromSeconds(5)), epochs, ledger);
         await supervisor.StartAsync(cancellationToken);
         var projections = await ProjectionStore.OpenAsync(Path.Combine(dataDirectory, "projections.db"), cancellationToken);
-        return new VerticalSliceRunner(evidence, ledger, supervisor, projections);
+        var runner = new VerticalSliceRunner(evidence, ledger, supervisor, projections);
+        await runner.RestoreIdentityFromLedgerAsync(cancellationToken);
+        return runner;
     }
 
     public async Task ProcessJournalLineAsync(ReadOnlyMemory<byte> line, CancellationToken cancellationToken = default)
@@ -94,6 +96,18 @@ public sealed class VerticalSliceRunner : IAsyncDisposable
         var output = _formatter.Format(fact, decision);
         await _projections.ApplyAsync(output, ct);
         _outputs.Add(output);
+    }
+
+    private async Task RestoreIdentityFromLedgerAsync(CancellationToken cancellationToken)
+    {
+        SessionBinding? binding = null;
+        await foreach (var observation in _ledger.ReadObservationsAsync(null, cancellationToken).ConfigureAwait(false))
+        {
+            if (observation.Kind == ObservationKind.SessionBound)
+                binding = new SessionBinding(observation.SessionId, observation.Profile);
+        }
+        if (binding is not null)
+            _identity.Restore(binding);
     }
 
     private async Task RejectAsync(RawEvidenceReceipt receipt, string code, string message, CancellationToken ct)
