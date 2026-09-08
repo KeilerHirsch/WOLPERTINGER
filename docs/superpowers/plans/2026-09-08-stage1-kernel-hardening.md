@@ -51,7 +51,7 @@
 - [x] **Step 3:** Add `KernelSupervisorLifecycle` (`Cold`, `Starting`, `Recovering`, `Synchronized`, `Degraded`, `Faulted`, `Stopped`) to diagnostics; transition to `Faulted` on ambiguous apply/recovery exceptions.
 - [x] **Step 4:** Make `VerticalSliceRunner` stop accepting lines after any dispatch exception or non-committed kernel result. Reopen/replay is the only recovery path.
 - [x] **Step 5:** Run focused tests to GREEN.
-- [ ] **Step 6:** Commit `fix: close pending normalized work after restart`.
+- [x] **Step 6:** Landed with integrated hardening commit `fbd1489` (`fix: harden Stage 1 authority recovery`).
 ### Task 3: Make dual agreement cover the surfaced fact
 
 **Files:**
@@ -62,7 +62,7 @@
 - [x] **Step 2:** Run focused test and verify RED.
 - [x] **Step 3:** Extend `ValidateAgreement` so null/non-null mismatch or record inequality in `JumpFact` is divergence.
 - [x] **Step 4:** Run all supervisor tests to GREEN.
-- [ ] **Step 5:** Commit `fix: require jump fact agreement`.
+- [x] **Step 5:** Landed with integrated hardening commit `fbd1489`.
 
 ### Task 4: Digest every transition-relevant kernel field
 
@@ -81,7 +81,7 @@
 - [x] **Step 4:** Independently regenerate state/response golden vectors (never from the Ada encoder), update expected SHA-256 values, and run Ada + .NET contract tests to GREEN.
 - [x] **Step 5:** Update architecture docs with an explicit `included in digest / excluded from digest` statement.
 - [x] **Step 6:** Run GNATprove; require all existing proof obligations to remain proved.
-- [ ] **Step 7:** Commit `fix: cover transition state in canonical digest`.
+- [x] **Step 7:** Landed with integrated hardening commit `fbd1489`.
 
 ### Task 5: Crash-window and lifecycle acceptance
 
@@ -94,5 +94,5 @@
 - [x] **Step 1:** Add/complete real-process tests for host restart with filled ledger, both-kernels-dead after ledger commit, Active failure/rejoin, and lifecycle state visibility.
 - [x] **Step 2:** Verify request timeout remains the Stage-1 protocol-liveness detector; do not add a heartbeat message in this pass. Document periodic heartbeat as future observability work, not authority semantics.
 - [x] **Step 3:** Run full .NET, Ada runtime, GNATprove, real ingest/replay, credential scan, and `git diff --check`.
-- [ ] **Step 4:** Push normal commits, verify remote == local and Windows CI success.
-- [ ] **Step 5:** Append a Notion closure checkpoint and reinstate the Foundation-complete status only after the remote gate is green.
+- [x] **Step 4:** Push normal commits, verify remote == local and Windows CI success.
+- [x] **Step 5:** Append a Notion closure checkpoint and reinstate the Foundation-complete status only after the remote gate is green.
