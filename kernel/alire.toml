@@ -1,0 +1,12 @@
+name = "wolpertinger_kernel"
+version = "0.1.0-dev"
+description = "WOLPERTINGER deterministic trusted kernel"
+licenses = "EUPL-1.2"
+executables = ["wolpertinger_kernel_main"]
+project-files = ["wolpertinger_kernel.gpr"]
+
+[[depends-on]]
+cbor_ada = "=0.3.0"
+
+[[pins]]
+cbor_ada = { url = "https://github.com/b-erdem/cbor_ada.git", commit = "b448c366117ff9f6c050b13d4fe609bb79495759" }
