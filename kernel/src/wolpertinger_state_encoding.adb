@@ -14,6 +14,7 @@ package body Wolpertinger_State_Encoding is
    use type System.Storage_Elements.Storage_Array;
 
    Zero_16 : constant Types.Byte_16 := [others => 0];
+   Zero_32 : constant Types.Byte_32 := [others => 0];
    Zero_Decimal : constant Types.Decimal_64 :=
      (Coefficient => 0, Exponent => 0);
 
@@ -25,6 +26,15 @@ package body Wolpertinger_State_Encoding is
       end loop;
       return Result;
    end To_CBOR;
+   function To_CBOR (Value : Types.Byte_32) return CBOR.Byte_Array is
+      Result : CBOR.Byte_Array (1 .. 32);
+   begin
+      for I in Value'Range loop
+         Result (CBOR.SE_Offset (I)) := CBOR.Byte (Value (I));
+      end loop;
+      return Result;
+   end To_CBOR;
+
    function To_CBOR (Value : Types.Text_64) return CBOR.Byte_Array is
       Result : CBOR.Byte_Array (1 .. CBOR.SE_Offset (Value.Length));
    begin
@@ -80,9 +90,11 @@ package body Wolpertinger_State_Encoding is
       FID           : Types.Text_64 := (others => <>);
       Realm         : Types.Galaxy_Realm := Types.Unknown;
       Save_Epoch    : Interfaces.Unsigned_64 := 0;
-      Last_Sequence : Interfaces.Unsigned_64 := 0;
-      Last_Ordinal  : Interfaces.Unsigned_32 := 0;
-      Address       : Interfaces.Unsigned_64 := 0;
+      Last_Sequence      : Interfaces.Unsigned_64 := 0;
+      Last_Ordinal       : Interfaces.Unsigned_32 := 0;
+      Last_Message_Count : Interfaces.Unsigned_16 := 0;
+      Last_Digest        : Types.Byte_32 := Zero_32;
+      Address            : Interfaces.Unsigned_64 := 0;
       Star_System   : Types.Text_128 := (others => <>);
       Location_Prov : Types.Source_Provenance := Types.Unknown_Source;
       Location_Fresh : State_Types.Freshness_State := State_Types.Unknown;
@@ -104,6 +116,8 @@ package body Wolpertinger_State_Encoding is
       if State.Has_Last_Cursor then
          Last_Sequence := State.Last_Cursor.Evidence_Sequence;
          Last_Ordinal := State.Last_Cursor.Message_Ordinal;
+         Last_Message_Count := State.Last_Message_Count;
+         Last_Digest := State.Last_Digest;
       end if;
 
       if State.Location.Known then
@@ -112,7 +126,7 @@ package body Wolpertinger_State_Encoding is
          Location_Prov := State.Location.Provenance;
          Location_Fresh := State.Location.Freshness;
          Position := State.Location.Position;
-         Jump_Distance := State.Last_Jump.Jump_Distance;
+         Jump_Distance := State.Last_Jump_Distance;
       end if;
       if State.Fuel.Known then
          Fuel_Prov := State.Fuel.Provenance;
@@ -121,20 +135,24 @@ package body Wolpertinger_State_Encoding is
          Fuel_Used := State.Fuel.Used;
       end if;
 
-      return Enc.Encode_Array (19)
-        & Enc.Encode_Unsigned (1)
+      return Enc.Encode_Array (23)
+        & Enc.Encode_Unsigned (2)
         & Enc.Encode_Bool (State.Bound)
         & Enc.Encode_Byte_String (To_CBOR (Session))
         & Encode_Text (FID)
         & Enc.Encode_Unsigned (CBOR.UInt64 (Types.Galaxy_Realm'Pos (Realm)))
         & Enc.Encode_Unsigned (CBOR.UInt64 (Save_Epoch))
+        & Enc.Encode_Bool (State.Has_Last_Cursor)
         & Enc.Encode_Unsigned (CBOR.UInt64 (Last_Sequence))
         & Enc.Encode_Unsigned (CBOR.UInt64 (Last_Ordinal))
+        & Enc.Encode_Unsigned (CBOR.UInt64 (Last_Message_Count))
+        & Enc.Encode_Byte_String (To_CBOR (Last_Digest))
         & Enc.Encode_Bool (State.Location.Known)
         & Enc.Encode_Unsigned (CBOR.UInt64 (Address))
         & Encode_Text (Star_System)
         & Enc.Encode_Unsigned (CBOR.UInt64 (Types.Source_Provenance'Pos (Location_Prov)))
         & Enc.Encode_Unsigned (CBOR.UInt64 (State_Types.Freshness_State'Pos (Location_Fresh)))
+        & Enc.Encode_Bool (State.Fuel.Known)
         & Enc.Encode_Unsigned (CBOR.UInt64 (Types.Source_Provenance'Pos (Fuel_Prov)))
         & Enc.Encode_Unsigned (CBOR.UInt64 (State_Types.Freshness_State'Pos (Fuel_Fresh)))
         & Enc.Encode_Array (3)

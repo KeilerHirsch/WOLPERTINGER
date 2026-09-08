@@ -67,6 +67,24 @@ public sealed class KernelSupervisorTests
     }
 
     [Fact]
+    public async Task JumpFactMismatchRaisesDivergenceBeforePublish()
+    {
+        var activeResult = Result(KernelRole.Active);
+        var shadowFact = activeResult.JumpFact! with { StarSystem = "Corrupted Shadow Fact" };
+        var shadowResult = Result(KernelRole.Shadow) with { JumpFact = shadowFact };
+        await using var supervisor = new KernelSupervisor(
+            new FakeKernelClient(activeResult),
+            new FakeKernelClient(shadowResult),
+            new FakeEpochStore());
+
+        await supervisor.StartAsync();
+
+        var error = await Assert.ThrowsAsync<KernelDivergenceException>(() => supervisor.ApplyAsync(Observation()));
+        Assert.Contains("fact", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(KernelSupervisorLifecycle.Faulted, supervisor.Diagnostics.Lifecycle);
+    }
+
+    [Fact]
     public async Task CursorMismatchRaisesDivergence()
     {
         var active = new FakeKernelClient(Result(KernelRole.Active));
@@ -96,6 +114,37 @@ public sealed class KernelSupervisorTests
         Assert.Equal(2, shadow.AppliedBytes.Count);
     }
     [Fact]
+    public async Task AmbiguousApplyFaultsSupervisorLifecycle()
+    {
+        var active = new FakeKernelClient();
+        var shadow = new FakeKernelClient();
+        await using var supervisor = new KernelSupervisor(active, shadow, new FakeEpochStore());
+
+        await supervisor.StartAsync();
+        Assert.Equal(KernelSupervisorLifecycle.Synchronized, supervisor.Diagnostics.Lifecycle);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => supervisor.ApplyAsync(Observation()));
+        Assert.Equal(KernelSupervisorLifecycle.Faulted, supervisor.Diagnostics.Lifecycle);
+    }
+
+    [Fact]
+    public async Task AgreedNonCommittedKernelStatusFaultsSupervisor()
+    {
+        var rejectedActive = Result(KernelRole.Active) with { Status = KernelResponseStatus.SequenceGap, JumpFact = null };
+        var rejectedShadow = Result(KernelRole.Shadow) with { Status = KernelResponseStatus.SequenceGap, JumpFact = null };
+        await using var supervisor = new KernelSupervisor(
+            new FakeKernelClient(rejectedActive),
+            new FakeKernelClient(rejectedShadow),
+            new FakeEpochStore());
+
+        await supervisor.StartAsync();
+
+        var error = await Assert.ThrowsAsync<InvalidDataException>(() => supervisor.ApplyAsync(Observation()));
+        Assert.Contains("SequenceGap", error.Message, StringComparison.Ordinal);
+        Assert.Equal(KernelSupervisorLifecycle.Faulted, supervisor.Diagnostics.Lifecycle);
+    }
+
+    [Fact]
     public async Task DeadActiveIsPromotedBeforeNextDispatchAndEpochAdvances()
     {
         var oldActive = new FakeKernelClient(SessionResult(KernelRole.Active));
@@ -106,7 +155,6 @@ public sealed class KernelSupervisorTests
         await using var supervisor = new KernelSupervisor(oldActive, oldShadow, new FakeEpochStore(), replay, factory);
 
         await supervisor.StartAsync();
-        _ = await supervisor.ApplyAsync(SessionObservation());
         oldActive.IsHealthy = false;
 
         var result = await supervisor.ApplyAsync(Observation());
@@ -119,18 +167,41 @@ public sealed class KernelSupervisorTests
     }
 
     [Fact]
+    public async Task DeadShadowRejoinMustAgreeOnSurfacedJumpFact()
+    {
+        var active = new FakeKernelClient(SessionResult(KernelRole.Active), JumpResult(KernelRole.Active));
+        var oldShadow = new FakeKernelClient(SessionResult(KernelRole.Shadow));
+        var corruptFact = JumpResult(KernelRole.Shadow) with
+        {
+            JumpFact = JumpResult(KernelRole.Shadow).JumpFact! with { StarSystem = "Corrupted Rejoin Fact" },
+        };
+        var replacement = new FakeKernelClient(SessionResult(KernelRole.Shadow), corruptFact);
+        var replay = new FakeReplaySource(SessionObservation());
+        await using var supervisor = new KernelSupervisor(
+            active, oldShadow, new FakeEpochStore(), replay, new FakeKernelClientFactory(replacement));
+
+        await supervisor.StartAsync();
+        oldShadow.IsHealthy = false;
+        replay.Add(Observation());
+
+        var error = await Assert.ThrowsAsync<KernelDivergenceException>(() => supervisor.ApplyAsync(Observation()));
+        Assert.Contains("fact", error.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(KernelSupervisorLifecycle.Faulted, supervisor.Diagnostics.Lifecycle);
+    }
+
+    [Fact]
     public async Task DeadShadowRejoinsAtSameEpochAfterActiveProgresses()
     {
         var active = new FakeKernelClient(SessionResult(KernelRole.Active), JumpResult(KernelRole.Active));
         var oldShadow = new FakeKernelClient(SessionResult(KernelRole.Shadow));
         var replacement = new FakeKernelClient(SessionResult(KernelRole.Shadow), JumpResult(KernelRole.Shadow));
-        var replay = new FakeReplaySource(SessionObservation(), Observation());
+        var replay = new FakeReplaySource(SessionObservation());
         var factory = new FakeKernelClientFactory(replacement);
         await using var supervisor = new KernelSupervisor(active, oldShadow, new FakeEpochStore(), replay, factory);
 
         await supervisor.StartAsync();
-        _ = await supervisor.ApplyAsync(SessionObservation());
         oldShadow.IsHealthy = false;
+        replay.Add(Observation());
 
         var result = await supervisor.ApplyAsync(Observation());
 
@@ -148,7 +219,7 @@ public sealed class KernelSupervisorTests
             epoch,
             role,
             new ObservationCursor(1, 0),
-            FixedBytes32.FromHex("9538fbcfaa4d3288a141ce8606f400b8a58e1738f95e59ecd46fb3d2f7a58b1c"),
+            FixedBytes32.FromHex("1ffb50cc04196362567e3571209cf0fc7a124c98cea1a0b3dd552d1737f222b6"),
             null);
 
     private static KernelApplyResult JumpResult(KernelRole role, ulong epoch = 1)
@@ -162,7 +233,7 @@ public sealed class KernelSupervisorTests
             epoch,
             role,
             new ObservationCursor(2, 0),
-            FixedBytes32.FromHex("6a7b08d0f7bb2a7614719bf4644989015e1d66735a3fe2e42cdc7a5dd2dd1938"),
+            FixedBytes32.FromHex("c71b67e5b6a22923473ff6d3426a927b0d6c854fec911256b8c77b4912f897cf"),
             new KernelJumpFact(
                 new ObservationCursor(2, 0),
                 1_234_567_890_123_456_789,
@@ -213,8 +284,9 @@ public sealed class KernelSupervisorTests
 
     private sealed class FakeReplaySource : IObservationReplaySource
     {
-        private readonly ObservationEnvelope[] _observations;
-        public FakeReplaySource(params ObservationEnvelope[] observations) => _observations = observations;
+        private readonly List<ObservationEnvelope> _observations;
+        public FakeReplaySource(params ObservationEnvelope[] observations) => _observations = [.. observations];
+        public void Add(ObservationEnvelope observation) => _observations.Add(observation);
         public async IAsyncEnumerable<ObservationEnvelope> ReadObservationsAsync(
             ObservationCursor? after,
             [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)

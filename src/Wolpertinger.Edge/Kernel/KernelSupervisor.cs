@@ -3,12 +3,24 @@ using Wolpertinger.Edge.Persistence;
 
 namespace Wolpertinger.Edge.Kernel;
 
+public enum KernelSupervisorLifecycle : byte
+{
+    Cold = 0,
+    Starting = 1,
+    Recovering = 2,
+    Synchronized = 3,
+    Degraded = 4,
+    Faulted = 5,
+    Stopped = 6,
+}
+
 public sealed record KernelSupervisorDiagnostics(
     ulong Epoch,
     int? ActiveProcessId,
     int? ShadowProcessId,
     ObservationCursor? LastAgreedCursor,
-    FixedBytes32? LastAgreedDigest);
+    FixedBytes32? LastAgreedDigest,
+    KernelSupervisorLifecycle Lifecycle);
 
 public sealed class KernelSupervisor : IAsyncDisposable
 {
@@ -17,6 +29,7 @@ public sealed class KernelSupervisor : IAsyncDisposable
     private readonly IAuthorityEpochStore _epochs;
     private readonly IObservationReplaySource? _replay;
     private readonly IKernelProcessClientFactory? _factory;
+    private readonly bool _recoverOnStart;
     private readonly SemaphoreSlim _lane = new(1, 1);
     private ObservationCursor? _lastAgreedCursor;
     private FixedBytes32? _lastAgreedDigest;
@@ -29,18 +42,21 @@ public sealed class KernelSupervisor : IAsyncDisposable
         IKernelProcessClient shadow,
         IAuthorityEpochStore epochs,
         IObservationReplaySource? replay,
-        IKernelProcessClientFactory? factory)
+        IKernelProcessClientFactory? factory,
+        bool recoverOnStart = true)
     {
         _active = active;
         _shadow = shadow;
         _epochs = epochs;
         _replay = replay;
         _factory = factory;
+        _recoverOnStart = recoverOnStart;
     }
 
     public ulong CurrentEpoch { get; private set; }
+    public KernelSupervisorLifecycle Lifecycle { get; private set; } = KernelSupervisorLifecycle.Cold;
     public KernelSupervisorDiagnostics Diagnostics
-        => new(CurrentEpoch, _active.ProcessId, _shadow.ProcessId, _lastAgreedCursor, _lastAgreedDigest);
+        => new(CurrentEpoch, _active.ProcessId, _shadow.ProcessId, _lastAgreedCursor, _lastAgreedDigest, Lifecycle);
 
     public static KernelSupervisor Create(
         KernelProcessOptions options,
@@ -52,27 +68,53 @@ public sealed class KernelSupervisor : IAsyncDisposable
         return new KernelSupervisor(
             internalFactory.Create(), internalFactory.Create(), epochs, replay, internalFactory);
     }
+
+    internal static KernelSupervisor CreateForExactReplay(
+        KernelProcessOptions options,
+        AuthorityEpochStore epochs,
+        IObservationReplaySource replay)
+    {
+        var factory = new KernelProcessClientFactory(options);
+        var internalFactory = (IKernelProcessClientFactory)factory;
+        return new KernelSupervisor(
+            internalFactory.Create(), internalFactory.Create(), epochs, replay, internalFactory, recoverOnStart: false);
+    }
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         if (_started) throw new InvalidOperationException("Kernel supervisor is already started.");
-        CurrentEpoch = await _epochs.NextAsync(cancellationToken).ConfigureAwait(false);
-        await Task.WhenAll(
-            _active.StartAsync(cancellationToken),
-            _shadow.StartAsync(cancellationToken)).ConfigureAwait(false);
-        await Task.WhenAll(
-            _active.SetRoleAsync(CurrentEpoch, KernelRole.Active, cancellationToken),
-            _shadow.SetRoleAsync(CurrentEpoch, KernelRole.Shadow, cancellationToken)).ConfigureAwait(false);
+        if (Lifecycle == KernelSupervisorLifecycle.Stopped)
+            throw new InvalidOperationException("Kernel supervisor is stopped.");
 
-        if (_replay is not null)
+        Lifecycle = KernelSupervisorLifecycle.Starting;
+        try
         {
-            await foreach (var observation in _replay.ReadObservationsAsync(null, cancellationToken).ConfigureAwait(false))
+            CurrentEpoch = await _epochs.NextAsync(cancellationToken).ConfigureAwait(false);
+            await Task.WhenAll(
+                _active.StartAsync(cancellationToken),
+                _shadow.StartAsync(cancellationToken)).ConfigureAwait(false);
+            await Task.WhenAll(
+                _active.SetRoleAsync(CurrentEpoch, KernelRole.Active, cancellationToken),
+                _shadow.SetRoleAsync(CurrentEpoch, KernelRole.Shadow, cancellationToken)).ConfigureAwait(false);
+
+            if (_recoverOnStart && _replay is not null)
             {
-                var result = await ApplyToBothAsync(observation, cancellationToken).ConfigureAwait(false);
-                if (!IsCommittedStateResult(result.Status))
-                    throw new InvalidDataException($"Startup replay failed closed with kernel status {result.Status}.");
+                Lifecycle = KernelSupervisorLifecycle.Recovering;
+                await foreach (var observation in _replay.ReadObservationsAsync(null, cancellationToken).ConfigureAwait(false))
+                {
+                    var result = await ApplyToBothAsync(observation, cancellationToken).ConfigureAwait(false);
+                    if (!IsCommittedStateResult(result.Status))
+                        throw new InvalidDataException($"Startup replay failed closed with kernel status {result.Status}.");
+                }
             }
+
+            _started = true;
+            Lifecycle = KernelSupervisorLifecycle.Synchronized;
         }
-        _started = true;
+        catch
+        {
+            Lifecycle = KernelSupervisorLifecycle.Faulted;
+            throw;
+        }
     }
 
     public async Task<KernelApplyResult> ApplyAsync(
@@ -81,17 +123,38 @@ public sealed class KernelSupervisor : IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(observation);
         if (!_started) throw new InvalidOperationException("Kernel supervisor is not started.");
+        if (Lifecycle == KernelSupervisorLifecycle.Faulted)
+            throw new InvalidOperationException("Kernel supervisor is faulted; reopen and replay before further ingest.");
 
         await _lane.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
+            if (Lifecycle != KernelSupervisorLifecycle.Synchronized)
+                throw new InvalidOperationException($"Kernel supervisor is not synchronized ({Lifecycle}).");
+
             if (!_active.IsHealthy)
+            {
+                Lifecycle = KernelSupervisorLifecycle.Recovering;
                 await PromoteShadowAndRejoinAsync(cancellationToken).ConfigureAwait(false);
+                Lifecycle = KernelSupervisorLifecycle.Synchronized;
+            }
 
             if (!_shadow.IsHealthy)
-                return await ApplyWithActiveThenRejoinShadowAsync(observation, cancellationToken).ConfigureAwait(false);
+            {
+                Lifecycle = KernelSupervisorLifecycle.Degraded;
+                var degradedResult = await ApplyWithActiveThenRejoinShadowAsync(observation, cancellationToken).ConfigureAwait(false);
+                Lifecycle = KernelSupervisorLifecycle.Synchronized;
+                return degradedResult;
+            }
 
-            return await ApplyToBothAsync(observation, cancellationToken).ConfigureAwait(false);
+            var result = await ApplyToBothAsync(observation, cancellationToken).ConfigureAwait(false);
+            Lifecycle = KernelSupervisorLifecycle.Synchronized;
+            return result;
+        }
+        catch
+        {
+            Lifecycle = KernelSupervisorLifecycle.Faulted;
+            throw;
         }
         finally { _lane.Release(); }
     }
@@ -106,6 +169,7 @@ public sealed class KernelSupervisor : IAsyncDisposable
         var shadow = await shadowTask.ConfigureAwait(false);
         ValidateFencing(active, shadow);
         ValidateAgreement(active, shadow);
+        EnsureCommittedStateResult(active);
         RecordAgreement(active);
         return active;
     }
@@ -117,9 +181,12 @@ public sealed class KernelSupervisor : IAsyncDisposable
         EnsureRecoveryConfigured();
         var active = await _active.ApplyAsync(observation, cancellationToken).ConfigureAwait(false);
         ValidateActiveFencing(active);
-        var targetCursor = IsCommittedStateResult(active.Status) ? active.Cursor : _lastAgreedCursor;
+        EnsureCommittedStateResult(active);
+        var targetCursor = active.Cursor;
         var targetDigest = IsCommittedStateResult(active.Status) ? active.StateDigest : _lastAgreedDigest;
-        await ReplaceShadowAsync(targetCursor, targetDigest, cancellationToken).ConfigureAwait(false);
+        var shadow = await ReplaceShadowAsync(targetCursor, targetDigest, cancellationToken).ConfigureAwait(false);
+        if (shadow is not null)
+            ValidateAgreement(active, shadow);
         if (IsCommittedStateResult(active.Status)) RecordAgreement(active);
         return active;
     }
@@ -148,7 +215,7 @@ public sealed class KernelSupervisor : IAsyncDisposable
         await oldActive.DisposeAsync().ConfigureAwait(false);
     }
 
-    private async Task ReplaceShadowAsync(
+    private async Task<KernelApplyResult?> ReplaceShadowAsync(
         ObservationCursor? targetCursor,
         FixedBytes32? targetDigest,
         CancellationToken cancellationToken)
@@ -158,12 +225,14 @@ public sealed class KernelSupervisor : IAsyncDisposable
         var replacement = _factory!.Create();
         await replacement.StartAsync(cancellationToken).ConfigureAwait(false);
         await replacement.SetRoleAsync(CurrentEpoch, KernelRole.Shadow, cancellationToken).ConfigureAwait(false);
+        KernelApplyResult? replayResult = null;
         if (targetCursor is not null && targetDigest is not null)
-            await ReplayToAsync(replacement, targetCursor.Value, targetDigest.Value, cancellationToken).ConfigureAwait(false);
+            replayResult = await ReplayToAsync(replacement, targetCursor.Value, targetDigest.Value, cancellationToken).ConfigureAwait(false);
         _shadow = replacement;
         await oldShadow.DisposeAsync().ConfigureAwait(false);
+        return replayResult;
     }
-    private async Task ReplayToAsync(
+    private async Task<KernelApplyResult> ReplayToAsync(
         IKernelProcessClient client,
         ObservationCursor targetCursor,
         FixedBytes32 targetDigest,
@@ -184,6 +253,7 @@ public sealed class KernelSupervisor : IAsyncDisposable
 
         if (last is null || last.Cursor != targetCursor || last.StateDigest != targetDigest)
             throw new KernelDivergenceException("Rejoining Shadow did not reach the agreed cursor/state digest.");
+        return last;
     }
 
     private void EnsureRecoveryConfigured()
@@ -194,6 +264,12 @@ public sealed class KernelSupervisor : IAsyncDisposable
 
     private static bool IsCommittedStateResult(KernelResponseStatus status)
         => status is KernelResponseStatus.Ok or KernelResponseStatus.Idempotent;
+
+    private static void EnsureCommittedStateResult(KernelApplyResult result)
+    {
+        if (!IsCommittedStateResult(result.Status))
+            throw new InvalidDataException($"Trusted kernels agreed on non-committed status {result.Status}; fail closed.");
+    }
 
     private void RecordAgreement(KernelApplyResult result)
     {
@@ -226,6 +302,8 @@ public sealed class KernelSupervisor : IAsyncDisposable
             throw new KernelDivergenceException("Active/Shadow state-digest divergence.");
         if (active.Status != shadow.Status)
             throw new KernelDivergenceException("Active/Shadow status divergence.");
+        if (!Equals(active.JumpFact, shadow.JumpFact))
+            throw new KernelDivergenceException("Active/Shadow JumpFact divergence.");
     }
 
     private static int Compare(ObservationCursor left, ObservationCursor right)

@@ -51,6 +51,8 @@ public sealed class VerticalSliceRunner : IAsyncDisposable
     public async Task ProcessJournalLineAsync(ReadOnlyMemory<byte> line, CancellationToken cancellationToken = default)
     {
         if (line.IsEmpty) throw new ArgumentException("Journal line is empty.", nameof(line));
+        if (_supervisor.Lifecycle != KernelSupervisorLifecycle.Synchronized)
+            throw new InvalidOperationException($"Ingest is unavailable while trusted authority is {_supervisor.Lifecycle}; reopen and replay if faulted.");
         var receipt = await _evidence.AppendAsync(new RawEvidenceInput(RawEvidenceSourceKind.LocalJournal, line, DateTimeOffset.UtcNow), cancellationToken);
         JsonDocument? document = null;
         try { document = JsonDocument.Parse(line); }

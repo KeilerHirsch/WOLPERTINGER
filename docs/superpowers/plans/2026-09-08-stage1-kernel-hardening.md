@@ -46,11 +46,11 @@
 - Modify: `src/Wolpertinger.Edge/Runtime/VerticalSliceRunner.cs`
 - Test: `tests/Wolpertinger.Integration.Tests/HostRestartRecoveryTests.cs`
 
-- [ ] **Step 1:** Write RED integration test: bind session, kill both kernel processes, process the next FSDJump so raw+normalized records are durable but dispatch fails, verify the runner refuses any later ingest, dispose/reopen, and verify startup replay closes the pending cursor.
-- [ ] **Step 2:** Run and confirm failure is the missing fail-stop/recovery behavior.
-- [ ] **Step 3:** Add `KernelSupervisorLifecycle` (`Cold`, `Starting`, `Recovering`, `Synchronized`, `Degraded`, `Faulted`, `Stopped`) to diagnostics; transition to `Faulted` on ambiguous apply/recovery exceptions.
-- [ ] **Step 4:** Make `VerticalSliceRunner` stop accepting lines after any dispatch exception or non-committed kernel result. Reopen/replay is the only recovery path.
-- [ ] **Step 5:** Run focused tests to GREEN.
+- [x] **Step 1:** Write RED integration test: bind session, kill both kernel processes, process the next FSDJump so raw+normalized records are durable but dispatch fails, verify the runner refuses any later ingest, dispose/reopen, and verify startup replay closes the pending cursor.
+- [x] **Step 2:** Run and confirm failure is the missing fail-stop/recovery behavior.
+- [x] **Step 3:** Add `KernelSupervisorLifecycle` (`Cold`, `Starting`, `Recovering`, `Synchronized`, `Degraded`, `Faulted`, `Stopped`) to diagnostics; transition to `Faulted` on ambiguous apply/recovery exceptions.
+- [x] **Step 4:** Make `VerticalSliceRunner` stop accepting lines after any dispatch exception or non-committed kernel result. Reopen/replay is the only recovery path.
+- [x] **Step 5:** Run focused tests to GREEN.
 - [ ] **Step 6:** Commit `fix: close pending normalized work after restart`.
 ### Task 3: Make dual agreement cover the surfaced fact
 
@@ -58,10 +58,10 @@
 - Modify: `src/Wolpertinger.Edge/Kernel/KernelSupervisor.cs`
 - Test: `tests/Wolpertinger.Edge.Tests/Kernel/KernelSupervisorTests.cs`
 
-- [ ] **Step 1:** Add RED test where Active and Shadow return the same cursor/status/state digest but different `KernelJumpFact` values; expect `KernelDivergenceException` before publish.
-- [ ] **Step 2:** Run focused test and verify RED.
-- [ ] **Step 3:** Extend `ValidateAgreement` so null/non-null mismatch or record inequality in `JumpFact` is divergence.
-- [ ] **Step 4:** Run all supervisor tests to GREEN.
+- [x] **Step 1:** Add RED test where Active and Shadow return the same cursor/status/state digest but different `KernelJumpFact` values; expect `KernelDivergenceException` before publish.
+- [x] **Step 2:** Run focused test and verify RED.
+- [x] **Step 3:** Extend `ValidateAgreement` so null/non-null mismatch or record inequality in `JumpFact` is divergence.
+- [x] **Step 4:** Run all supervisor tests to GREEN.
 - [ ] **Step 5:** Commit `fix: require jump fact agreement`.
 
 ### Task 4: Digest every transition-relevant kernel field
@@ -73,14 +73,14 @@
 - Modify: `tests/Wolpertinger.Edge.Tests/Contracts` golden expectations as needed
 - Modify: `docs/architecture/vertical-slice-v0.md`
 
-**Canonical change:** the state array grows from 19 to 21 fields. Add `Last_Message_Count` and `Last_Digest` after the last cursor fields. Both affect future transition outcomes (`Is_Next_Cursor` and same-cursor integrity/idempotency) and therefore must affect state identity.
+**Canonical change:** state identity advances to schema v2 and the array grows from 19 to 23 fields. Add `Has_Last_Cursor` before the cursor coordinates, add `Last_Message_Count` and `Last_Digest` after them, and encode `Fuel.Known` explicitly before fuel provenance/freshness. These values distinguish transition-relevant or authoritative states that must not share a digest.
 
-- [ ] **Step 1:** Add RED Ada tests proving states differing only in `Last_Message_Count` or only in `Last_Digest` produce different canonical bytes/digests.
-- [ ] **Step 2:** Run Ada tests and verify both REDs.
-- [ ] **Step 3:** Update the canonical encoder to 21 fields with neutral zero values when no last cursor exists.
-- [ ] **Step 4:** Independently regenerate state/response golden vectors (never from the Ada encoder), update expected SHA-256 values, and run Ada + .NET contract tests to GREEN.
-- [ ] **Step 5:** Update architecture docs with an explicit `included in digest / excluded from digest` statement.
-- [ ] **Step 6:** Run GNATprove; require all existing proof obligations to remain proved.
+- [x] **Step 1:** Add RED Ada tests proving states differing only in `Last_Message_Count` or only in `Last_Digest` produce different canonical bytes/digests.
+- [x] **Step 2:** Run Ada tests and verify both REDs.
+- [x] **Step 3:** Update the canonical encoder to schema v2 / 23 fields with neutral cursor/count/digest values when no last cursor exists and explicit `Fuel.Known` state.
+- [x] **Step 4:** Independently regenerate state/response golden vectors (never from the Ada encoder), update expected SHA-256 values, and run Ada + .NET contract tests to GREEN.
+- [x] **Step 5:** Update architecture docs with an explicit `included in digest / excluded from digest` statement.
+- [x] **Step 6:** Run GNATprove; require all existing proof obligations to remain proved.
 - [ ] **Step 7:** Commit `fix: cover transition state in canonical digest`.
 
 ### Task 5: Crash-window and lifecycle acceptance
@@ -91,8 +91,8 @@
 - Modify: `docs/architecture/vertical-slice-v0.md`
 - Modify: `README.md` / `ROADMAP.md` only if the closure status wording needs correction.
 
-- [ ] **Step 1:** Add/complete real-process tests for host restart with filled ledger, both-kernels-dead after ledger commit, Active failure/rejoin, and lifecycle state visibility.
-- [ ] **Step 2:** Verify request timeout remains the Stage-1 protocol-liveness detector; do not add a heartbeat message in this pass. Document periodic heartbeat as future observability work, not authority semantics.
-- [ ] **Step 3:** Run full .NET, Ada runtime, GNATprove, real ingest/replay, credential scan, and `git diff --check`.
+- [x] **Step 1:** Add/complete real-process tests for host restart with filled ledger, both-kernels-dead after ledger commit, Active failure/rejoin, and lifecycle state visibility.
+- [x] **Step 2:** Verify request timeout remains the Stage-1 protocol-liveness detector; do not add a heartbeat message in this pass. Document periodic heartbeat as future observability work, not authority semantics.
+- [x] **Step 3:** Run full .NET, Ada runtime, GNATprove, real ingest/replay, credential scan, and `git diff --check`.
 - [ ] **Step 4:** Push normal commits, verify remote == local and Windows CI success.
 - [ ] **Step 5:** Append a Notion closure checkpoint and reinstate the Foundation-complete status only after the remote gate is green.
