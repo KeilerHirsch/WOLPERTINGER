@@ -30,6 +30,7 @@ public sealed class VerticalSliceRunner : IAsyncDisposable
     public IReadOnlyList<CopilotOutput> Outputs => _outputs;
     public IReadOnlyList<DiagnosticEvent> Diagnostics => _diagnostics;
     public FixedBytes32? FinalStateDigest => _supervisor.Diagnostics.LastAgreedDigest;
+    public KernelSupervisorDiagnostics KernelDiagnostics => _supervisor.Diagnostics;
 
     public static async Task<VerticalSliceRunner> OpenAsync(string dataDirectory, string kernelExecutable,
         CancellationToken cancellationToken = default)

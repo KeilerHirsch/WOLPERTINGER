@@ -871,26 +871,26 @@ git commit -m "feat: complete FSDJump vertical slice"
 **Interfaces:**
 - Exercises the already-defined public/internal boundaries; this task must not introduce a second recovery architecture.
 
-- [ ] **Step 1: Add invalid-numeric evidence-retention test**
+- [x] **Step 1: Add invalid-numeric evidence-retention test**
 
 Feed an FSDJump whose `FuelLevel` coefficient overflows Int64. Assert the raw record exists and validates in the Evidence Log, a rejected-normalization diagnostic/disposition exists, the normalized observation sequence does not advance, and neither kernel state digest changes.
 
-- [ ] **Step 2: Add identity-conflict fail-closed test**
+- [x] **Step 2: Add identity-conflict fail-closed test**
 
 After binding synthetic FID `F100`, feed a deliberately crafted bound-context observation for `F200`. Assert `IdentityConflict`, no `JumpFact`, no output, and no canonical-state mutation.
 
-- [ ] **Step 3: Add sequence/integrity fault tests against the real kernel process**
+- [x] **Step 3: Add sequence/integrity fault tests against the real kernel process**
 
 Send cursor 3 while cursor 2 is expected and assert `SequenceGap`. Resend the last accepted cursor with a different evidence digest and assert `IntegrityFault`. In both cases the returned state digest must equal the pre-fault digest.
-- [ ] **Step 4: Add real Active-process failover/rejoin test**
+- [x] **Step 4: Add real Active-process failover/rejoin test**
 
 Process `SessionBound`, kill the Active PID exposed through read-only supervisor diagnostics, then process the committed FSDJump observation. Assert the caught-up Shadow is promoted under a strictly larger epoch, produces the authoritative output, the killed kernel is restarted and replayed as Shadow, and both end on the same cursor/digest.
 
-- [ ] **Step 5: Add real Shadow-process restart/catch-up test**
+- [x] **Step 5: Add real Shadow-process restart/catch-up test**
 
 Kill the Shadow after `SessionBound`, process FSDJump through the surviving Active, restart the Shadow at the current epoch, replay it to current cursor, and assert digest equality without an authority-epoch change.
 
-- [ ] **Step 6: Run the complete failure suite and fix only demonstrated defects**
+- [x] **Step 6: Run the complete failure suite and fix only demonstrated defects**
 
 ```powershell
 dotnet test tests/Wolpertinger.Integration.Tests/Wolpertinger.Integration.Tests.csproj -c Release --filter "FullyQualifiedName~FailureSemantics|FullyQualifiedName~KernelRecovery"
@@ -898,7 +898,7 @@ dotnet test tests/Wolpertinger.Integration.Tests/Wolpertinger.Integration.Tests.
 
 Every bug fix must first reproduce as one failing test and then make that exact test pass. Do not add speculative recovery branches.
 
-- [ ] **Step 7: Commit failure/recovery coverage**
+- [x] **Step 7: Commit failure/recovery coverage**
 
 ```powershell
 git add tests/Wolpertinger.Integration.Tests src kernel
