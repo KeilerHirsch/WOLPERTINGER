@@ -25,7 +25,8 @@ kernel-response = {
   2: uint,              ; authority epoch
   3: cursor / null,
   4: bstr .size 32,     ; authoritative state SHA-256
-  5: jump-fact / null
+  5: jump-fact / null,
+  6: 0..1                ; self-reported kernel role: 0=Shadow, 1=Active
 }
 
 jump-fact = [

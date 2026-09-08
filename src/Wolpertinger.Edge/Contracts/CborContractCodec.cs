@@ -31,6 +31,57 @@ public static class CborContractCodec
         return writer.Encode();
     }
 
+    public static byte[] EncodeSetRole(ulong epoch, KernelRole role)
+    {
+        if (role is < KernelRole.Shadow or > KernelRole.Active)
+        {
+            throw new ArgumentOutOfRangeException(nameof(role));
+        }
+
+        var writer = new CborWriter(CborConformanceMode.Canonical);
+        writer.WriteStartMap(3);
+        WriteKey(writer, 0); writer.WriteInt32(KernelProtocol.SetRoleMessageKind);
+        WriteKey(writer, 1); writer.WriteUInt64(epoch);
+        WriteKey(writer, 2); writer.WriteInt32((int)role);
+        writer.WriteEndMap();
+        return writer.Encode();
+    }
+
+    public static KernelResponse DecodeKernelResponse(ReadOnlyMemory<byte> encoded)
+    {
+        if (encoded.Length > KernelProtocol.MaximumPayloadBytes)
+        {
+            throw Violation($"Kernel response exceeds maximum payload of {KernelProtocol.MaximumPayloadBytes} bytes.");
+        }
+
+        try
+        {
+            var reader = new CborReader(encoded, CborConformanceMode.Canonical);
+            RequireLength(reader.ReadStartMap(), 7, "kernel response");
+            RequireKey(reader, 0); var kind = ReadKernelResponseKind(reader);
+            RequireKey(reader, 1); var status = ReadKernelResponseStatus(reader);
+            RequireKey(reader, 2); var epoch = reader.ReadUInt64();
+            RequireKey(reader, 3); var cursor = ReadNullableCursor(reader);
+            RequireKey(reader, 4); var stateDigest = ReadFixed32(reader);
+            RequireKey(reader, 5); var jumpFact = ReadNullableJumpFact(reader);
+            RequireKey(reader, 6); var role = ReadKernelRole(reader);
+            reader.ReadEndMap();
+            if (reader.BytesRemaining != 0)
+            {
+                throw Violation("Trailing bytes after kernel response.");
+            }
+
+            return new KernelResponse(kind, status, epoch, role, cursor, stateDigest, jumpFact);
+        }
+        catch (InvalidDataException)
+        {
+            throw;
+        }
+        catch (Exception ex) when (ex is CborContentException or InvalidOperationException or ArgumentException or OverflowException)
+        {
+            throw new InvalidDataException("Invalid trusted CBOR kernel response.", ex);
+        }
+    }
     public static ObservationEnvelope DecodeObservation(ReadOnlyMemory<byte> encoded)
     {
         if (encoded.Length > KernelProtocol.MaximumPayloadBytes)
@@ -186,6 +237,54 @@ public static class CborContractCodec
         return new ObservationCursor(sequence, (uint)ordinal);
     }
 
+    private static ObservationCursor? ReadNullableCursor(CborReader reader)
+    {
+        if (reader.PeekState() == CborReaderState.Null)
+        {
+            reader.ReadNull();
+            return null;
+        }
+
+        return ReadCursor(reader);
+    }
+
+    private static KernelResponseKind ReadKernelResponseKind(CborReader reader)
+    {
+        var value = reader.ReadInt32();
+        return value switch
+        {
+            1 => KernelResponseKind.Role,
+            2 => KernelResponseKind.Apply,
+            _ => throw Violation("Unknown kernel response kind."),
+        };
+    }
+
+    private static KernelRole ReadKernelRole(CborReader reader)
+    {
+        var value = reader.ReadInt32();
+        return value switch
+        {
+            0 => KernelRole.Shadow,
+            1 => KernelRole.Active,
+            _ => throw Violation("Unknown kernel role."),
+        };
+    }
+
+    private static KernelResponseStatus ReadKernelResponseStatus(CborReader reader)
+    {
+        var value = reader.ReadInt32();
+        return value switch
+        {
+            0 => KernelResponseStatus.Ok,
+            1 => KernelResponseStatus.Idempotent,
+            2 => KernelResponseStatus.SequenceGap,
+            3 => KernelResponseStatus.IntegrityFault,
+            4 => KernelResponseStatus.IdentityConflict,
+            5 => KernelResponseStatus.InvalidMessage,
+            6 => KernelResponseStatus.StaleEpoch,
+            _ => throw Violation("Unknown kernel response status."),
+        };
+    }
     private static ProfileKey ReadProfile(CborReader reader)
     {
         RequireLength(reader.ReadStartArray(), 3, "profile key");
@@ -315,6 +414,59 @@ public static class CborContractCodec
             fuelLevel);
     }
 
+    private static KernelJumpFact? ReadNullableJumpFact(CborReader reader)
+    {
+        if (reader.PeekState() == CborReaderState.Null)
+        {
+            reader.ReadNull();
+            return null;
+        }
+
+        RequireLength(reader.ReadStartArray(), 11, "JumpFact");
+        var cursor = ReadCursor(reader);
+        var systemAddress = reader.ReadUInt64();
+        var starSystem = reader.ReadTextString();
+        RequireUtf8Length(starSystem, 1, 128, "JumpFact StarSystem");
+        RequireLength(reader.ReadStartArray(), 3, "JumpFact position");
+        var x = ReadDecimal64(reader);
+        var y = ReadDecimal64(reader);
+        var z = ReadDecimal64(reader);
+        reader.ReadEndArray();
+        var jumpDistance = ReadDecimal64(reader);
+        var fuelUsed = ReadDecimal64(reader);
+        var fuelLevel = ReadDecimal64(reader);
+        var locationProvenance = ReadProvenance(reader);
+        var locationFreshness = ReadFreshness(reader);
+        var fuelProvenance = ReadProvenance(reader);
+        var fuelFreshness = ReadFreshness(reader);
+        reader.ReadEndArray();
+
+        return new KernelJumpFact(
+            cursor,
+            systemAddress,
+            starSystem,
+            new GalacticPosition(x, y, z),
+            jumpDistance,
+            fuelUsed,
+            fuelLevel,
+            locationProvenance,
+            locationFreshness,
+            fuelProvenance,
+            fuelFreshness);
+    }
+
+    private static FreshnessState ReadFreshness(CborReader reader)
+    {
+        var value = reader.ReadInt32();
+        return value switch
+        {
+            0 => FreshnessState.Unknown,
+            1 => FreshnessState.Current,
+            2 => FreshnessState.Stale,
+            3 => FreshnessState.Conflicting,
+            _ => throw Violation("Unknown freshness state."),
+        };
+    }
     private static Decimal64 ReadDecimal64(CborReader reader)
     {
         RequireLength(reader.ReadStartArray(), 2, "Decimal64");

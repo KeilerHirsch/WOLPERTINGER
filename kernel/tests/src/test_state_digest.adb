@@ -18,6 +18,7 @@ procedure Test_State_Digest is
    package SSE renames System.Storage_Elements;
 
    use type Interfaces.Integer_64;
+   use type Types.Byte_32;
    use type SSE.Storage_Element;
    use type SSE.Storage_Offset;
 
@@ -83,6 +84,7 @@ procedure Test_State_Digest is
       State.Location.Freshness := State_Types.Current;
       State.Fuel.Known := True;
       State.Fuel.Level := (Coefficient => 27_123, Exponent => -3);
+      State.Fuel.Used := (Coefficient => 4_843_642, Exponent => -6);
       State.Fuel.Provenance := Types.Local_Journal;
       State.Fuel.Freshness := State_Types.Current;
       State.Last_Jump.Jump_Distance := (Coefficient => 55_359, Exponent => -3);
@@ -127,6 +129,17 @@ procedure Test_State_Digest is
       end loop;
    end Populated_State_Matches_Golden_Bytes_And_Digest;
 
+   procedure Fuel_Used_Is_Part_Of_State_Identity is
+      Left  : State_Types.Kernel_State := Populated_State;
+      Right : State_Types.Kernel_State := Populated_State;
+   begin
+      Left.Fuel.Used := (Coefficient => 4_843_642, Exponent => -6);
+      Right.Fuel.Used := (Coefficient => 4_843_643, Exponent => -6);
+      Assert.Assert
+        (Digest.State_Digest (Left) /= Digest.State_Digest (Right),
+         "Fuel.Used must affect authoritative state digest");
+   end Fuel_Used_Is_Part_Of_State_Identity;
+
    procedure Session_State_Matches_Golden_Bytes_And_Digest is
       State         : constant State_Types.Kernel_State := Session_State;
       Expected      : constant SSE.Storage_Array :=
@@ -147,4 +160,5 @@ begin
    Empty_State_Uses_Neutral_Positions;
    Session_State_Matches_Golden_Bytes_And_Digest;
    Populated_State_Matches_Golden_Bytes_And_Digest;
+   Fuel_Used_Is_Part_Of_State_Identity;
 end Test_State_Digest;

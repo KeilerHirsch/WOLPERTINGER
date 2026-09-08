@@ -105,6 +105,7 @@ procedure Test_Kernel_Messages is
       Response.Kind := Protocol.Role_Response;
       Response.Status := Protocol.Response_OK;
       Response.Epoch := 1;
+      Response.Role := Control.Active;
       Response.State_Digest := To_Bytes_32 (Digest_Bytes);
       Assert_Bytes_Equal (Expected, Protocol.Encode_Response (Response), "role response");
    end Encode_Role_Response;
@@ -119,6 +120,7 @@ procedure Test_Kernel_Messages is
       Response.Kind := Protocol.Apply_Response;
       Response.Status := Protocol.Response_OK;
       Response.Epoch := 1;
+      Response.Role := Control.Active;
       Response.Has_Cursor := True;
       Response.Cursor := (Evidence_Sequence => 2, Message_Ordinal => 0);
       Response.State_Digest := To_Bytes_32 (Digest_Bytes);

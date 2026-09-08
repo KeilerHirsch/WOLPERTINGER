@@ -613,7 +613,7 @@ Encode state as a fixed-order CBOR array, not a map or memory dump:
   has-location, system-address, star-system, location-provenance, location-freshness,
   fuel-provenance, fuel-freshness,
   [x-decimal64, y-decimal64, z-decimal64],
-  fuel-level-decimal64, last-jump-distance-decimal64
+  fuel-level-decimal64, fuel-used-decimal64, last-jump-distance-decimal64
 ]
 ```
 
@@ -630,9 +630,11 @@ Both roles apply observations and return facts/digests. The host may surface fac
 
 - [x] **Step 6: Complete the kernel main loop and response encoding**
 
-For each host frame: decode -> validate -> apply/control -> compute digest -> encode one response -> flush stdout. Protocol responses include response kind, status, current epoch, cursor when applicable, state digest, and optional `JumpFact`.
+For each host frame: decode -> validate -> apply/control -> compute digest -> encode one response -> flush stdout. Protocol responses include response kind, status, current epoch, the kernel's current role, cursor when applicable, state digest, and optional `JumpFact`.
 
 No normal logging goes to stdout.
+
+Framing corruption (truncated header/payload, zero length, or oversize length) terminates the kernel process with a non-zero exit and no protocol stdout. A complete frame containing invalid CBOR/schema data returns a deterministic `INVALID_MESSAGE` response instead of attempting stream resynchronization.
 
 - [x] **Step 7: Run kernel protocol/digest tests and commit**
 
@@ -662,7 +664,7 @@ git commit -m "feat: expose framed trusted kernel process"
 **Interfaces:**
 - `KernelProcessClient.StartAsync`, `SetRoleAsync`, `ApplyAsync`, and `StopAsync` wrap one Ada child process.
 - `KernelSupervisor.ApplyAsync(ObservationEnvelope)` fans out identical bytes to both kernels, compares cursor/digest, and returns only fenced Active output.
-- [ ] **Step 1: Write failing epoch-store tests**
+- [x] **Step 1: Write failing epoch-store tests**
 
 Use an append-only `control/authority-epochs.bin` record of `epoch:u64_be || sha256("WLEP-v1" || epoch)`. Test clean creation, monotonic increments, truncated-tail recovery, and corrupted completed record rejection.
 
@@ -671,7 +673,7 @@ Assert.Equal(1UL, await store.NextAsync(ct));
 Assert.Equal(2UL, await store.NextAsync(ct));
 ```
 
-- [ ] **Step 2: Implement `IKernelProcessClient` and the real stdio client**
+- [x] **Step 2: Implement `IKernelProcessClient` and the real stdio client**
 
 Introduce an internal interface for deterministic unit fakes and one production implementation that launches `wolpertinger_kernel[.exe]` with redirected stdin/stdout/stderr. Serialize writes through one async lock per process and enforce one response per request.
 

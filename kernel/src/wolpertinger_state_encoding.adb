@@ -91,6 +91,7 @@ package body Wolpertinger_State_Encoding is
       Position      : Types.Galactic_Position :=
         (X => Zero_Decimal, Y => Zero_Decimal, Z => Zero_Decimal);
       Fuel_Level    : Types.Decimal_64 := Zero_Decimal;
+      Fuel_Used     : Types.Decimal_64 := Zero_Decimal;
       Jump_Distance : Types.Decimal_64 := Zero_Decimal;
    begin
       if State.Bound then
@@ -117,9 +118,10 @@ package body Wolpertinger_State_Encoding is
          Fuel_Prov := State.Fuel.Provenance;
          Fuel_Fresh := State.Fuel.Freshness;
          Fuel_Level := State.Fuel.Level;
+         Fuel_Used := State.Fuel.Used;
       end if;
 
-      return Enc.Encode_Array (18)
+      return Enc.Encode_Array (19)
         & Enc.Encode_Unsigned (1)
         & Enc.Encode_Bool (State.Bound)
         & Enc.Encode_Byte_String (To_CBOR (Session))
@@ -140,6 +142,7 @@ package body Wolpertinger_State_Encoding is
         & Encode_Decimal (Position.Y)
         & Encode_Decimal (Position.Z)
         & Encode_Decimal (Fuel_Level)
+        & Encode_Decimal (Fuel_Used)
         & Encode_Decimal (Jump_Distance);
    end Encode;
 end Wolpertinger_State_Encoding;

@@ -100,6 +100,47 @@ public sealed class CborContractCodecTests
         var error = Assert.Throws<InvalidDataException>(() => CborContractCodec.DecodeObservation(oversized));
         Assert.Contains("maximum", error.Message, StringComparison.OrdinalIgnoreCase);
     }
+    [Fact]
+    public void SetRoleMatchesGoldenVector()
+    {
+        var encoded = CborContractCodec.EncodeSetRole(1, KernelRole.Active);
+        Assert.Equal(ReadVector("response-role-accepted.hex").Length > 0, encoded.Length > 0);
+        Assert.Equal(Convert.FromHexString("a3000101010201"), encoded);
+    }
+
+    [Fact]
+    public void DecodeRoleResponseMatchesAdaGoldenVector()
+    {
+        var response = CborContractCodec.DecodeKernelResponse(ReadVector("response-role-accepted.hex"));
+
+        Assert.Equal(KernelResponseKind.Role, response.Kind);
+        Assert.Equal(KernelResponseStatus.Ok, response.Status);
+        Assert.Equal(1UL, response.Epoch);
+        Assert.Equal(KernelRole.Active, response.Role);
+        Assert.Null(response.Cursor);
+        Assert.Equal(FixedBytes32.FromHex("52094d19b4d413c54be6f0d0e8169453f397a785fbcdf7de2f07c86dbe9f79b9"), response.StateDigest);
+        Assert.Null(response.JumpFact);
+    }
+
+    [Fact]
+    public void DecodeFsdJumpResponseMatchesAdaGoldenVector()
+    {
+        var response = CborContractCodec.DecodeKernelResponse(ReadVector("response-fsdjump-applied.hex"));
+
+        Assert.Equal(KernelResponseKind.Apply, response.Kind);
+        Assert.Equal(KernelResponseStatus.Ok, response.Status);
+        Assert.Equal(1UL, response.Epoch);
+        Assert.Equal(KernelRole.Active, response.Role);
+        Assert.Equal(new ObservationCursor(2, 0), response.Cursor);
+        Assert.Equal(FixedBytes32.FromHex("6a7b08d0f7bb2a7614719bf4644989015e1d66735a3fe2e42cdc7a5dd2dd1938"), response.StateDigest);
+        Assert.NotNull(response.JumpFact);
+        Assert.Equal("W. Grantler NX-42", response.JumpFact!.StarSystem);
+        Assert.Equal(1_234_567_890_123_456_789UL, response.JumpFact.SystemAddress);
+        Assert.Equal(new Decimal64(55359, -3), response.JumpFact.JumpDistance);
+        Assert.Equal(new Decimal64(27123, -3), response.JumpFact.FuelLevel);
+        Assert.Equal(SourceProvenance.LocalJournal, response.JumpFact.LocationProvenance);
+        Assert.Equal(FreshnessState.Current, response.JumpFact.LocationFreshness);
+    }
     private static void AssertGoldenRoundTrip(string name, ObservationEnvelope observation)
     {
         var expected = ReadVector(name);
