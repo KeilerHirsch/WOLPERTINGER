@@ -630,7 +630,7 @@ package body Wolpertinger_Protocol is
       Jump_Value : constant CBOR.Byte_Array :=
         (if Value.Has_Jump_Fact then Encode_Jump_Fact (Value.Jump) else Enc.Encode_Null);
    begin
-      return Enc.Encode_Map (6)
+      return Enc.Encode_Map (7)
         & Enc.Encode_Unsigned (0)
         & Enc.Encode_Unsigned (CBOR.UInt64 (Kernel_Response_Kind'Pos (Value.Kind) + 1))
         & Enc.Encode_Unsigned (1)
@@ -642,7 +642,10 @@ package body Wolpertinger_Protocol is
         & Enc.Encode_Unsigned (4)
         & Enc.Encode_Byte_String (To_CBOR (Value.State_Digest))
         & Enc.Encode_Unsigned (5)
-        & Jump_Value;
+        & Jump_Value
+        & Enc.Encode_Unsigned (6)
+        & Enc.Encode_Unsigned
+            (CBOR.UInt64 (Wolpertinger_Control.Kernel_Role'Pos (Value.Role)));
    end Encode_Response;
 
 end Wolpertinger_Protocol;

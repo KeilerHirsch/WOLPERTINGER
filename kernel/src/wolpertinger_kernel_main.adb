@@ -113,6 +113,7 @@ procedure Wolpertinger_Kernel_Main is
       Response : Protocol.Kernel_Response := (others => <>);
    begin
       Response.Epoch := Authority.Current_Epoch;
+      Response.Role := Authority.Role;
       Response.State_Digest := Digest.State_Digest (State);
       if Message.Status /= Protocol.OK then
          Response.Kind := Protocol.Apply_Response;
@@ -133,6 +134,7 @@ procedure Wolpertinger_Kernel_Main is
                  (if Accepted then Protocol.Response_OK
                   else Protocol.Response_Stale_Epoch);
                Response.Epoch := Authority.Current_Epoch;
+               Response.Role := Authority.Role;
                Response.State_Digest := Digest.State_Digest (State);
             end;
 
@@ -144,6 +146,7 @@ procedure Wolpertinger_Kernel_Main is
                Response.Kind := Protocol.Apply_Response;
                Response.Status := To_Response_Status (Result.Status);
                Response.Epoch := Authority.Current_Epoch;
+               Response.Role := Authority.Role;
                Response.Has_Cursor := True;
                Response.Cursor := Message.Observation.Cursor;
                Response.State_Digest := Digest.State_Digest (State);

@@ -43,6 +43,7 @@ package Wolpertinger_Protocol is
       Kind          : Kernel_Response_Kind := Apply_Response;
       Status        : Kernel_Response_Status := Response_Invalid_Message;
       Epoch         : Interfaces.Unsigned_64 := 0;
+      Role          : Wolpertinger_Control.Kernel_Role := Wolpertinger_Control.Shadow;
       Has_Cursor    : Boolean := False;
       Cursor        : Wolpertinger_Types.Observation_Cursor;
       State_Digest  : Wolpertinger_Types.Byte_32 := [others => 0];
