@@ -6,6 +6,8 @@ namespace Wolpertinger.Edge.Kernel;
 
 internal interface IKernelProcessClient : IAsyncDisposable
 {
+    bool IsHealthy { get; }
+    int? ProcessId { get; }
     Task StartAsync(CancellationToken cancellationToken = default);
     Task SetRoleAsync(ulong epoch, KernelRole role, CancellationToken cancellationToken = default);
     Task<KernelApplyResult> ApplyAsync(
@@ -32,6 +34,9 @@ public sealed class KernelProcessClient : IKernelProcessClient
 
     public KernelProcessClient(KernelProcessOptions options)
         => _options = options ?? throw new ArgumentNullException(nameof(options));
+
+    public bool IsHealthy => !_disposed && !_unhealthy && _process is { HasExited: false };
+    public int? ProcessId => _process is { HasExited: false } process ? process.Id : null;
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {

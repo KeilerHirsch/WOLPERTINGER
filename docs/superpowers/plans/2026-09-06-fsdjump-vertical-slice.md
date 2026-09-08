@@ -684,18 +684,18 @@ Task<KernelApplyResult> ApplyAsync(ObservationEnvelope observation, Cancellation
 
 If framing, EOF, timeout, protocol decoding, or child exit occurs, mark that client unhealthy and stop using the channel.
 
-- [ ] **Step 3: Write failing supervisor fan-out/fencing tests with fake clients**
+- [x] **Step 3: Write failing supervisor fan-out/fencing tests with fake clients**
 
 Assert that identical envelope bytes are sent to Active and Shadow, both results must report the same cursor/digest, only the Active fact is returned, stale-epoch output is rejected, and mismatched digests raise `KernelDivergenceException`.
 
-- [ ] **Step 4: Implement the minimal supervisor state machine**
+- [x] **Step 4: Implement the minimal supervisor state machine**
 
 On startup allocate a fresh epoch, start two kernels, assign A=`ACTIVE`, B=`SHADOW`, and retain the last agreed cursor/digest. `ApplyAsync` waits for both results before publishing an Active fact under normal healthy operation.
-- [ ] **Step 5: Add failover/rejoin tests before implementation**
+- [x] **Step 5: Add failover/rejoin tests before implementation**
 
 Cover two paths. Shadow failure: Active remains authoritative, a new Shadow is started at the current epoch and catches up by replay. Active failure: require a valid caught-up Shadow result, allocate a new epoch, promote Shadow, reject any late old-epoch Active response, then restart/catch up the failed process as the new Shadow.
 
-- [ ] **Step 6: Implement replay-assisted kernel rejoin**
+- [x] **Step 6: Implement replay-assisted kernel rejoin**
 
 Add `IObservationReplaySource` to the persistence boundary:
 
@@ -707,7 +707,7 @@ IAsyncEnumerable<ObservationEnvelope> ReadObservationsAsync(
 
 A fresh kernel replays from sequence 1; a future checkpoint may supply `after`. Rejoin succeeds only when the rebuilt Shadow reaches the supervisor's current agreed cursor and state digest.
 
-- [ ] **Step 7: Run supervisor tests and commit**
+- [x] **Step 7: Run supervisor tests and commit**
 
 ```powershell
 dotnet test tests/Wolpertinger.Edge.Tests/Wolpertinger.Edge.Tests.csproj -c Release --filter FullyQualifiedName~Kernel

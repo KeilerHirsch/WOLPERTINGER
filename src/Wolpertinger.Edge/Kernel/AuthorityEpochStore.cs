@@ -4,7 +4,12 @@ using System.Text;
 
 namespace Wolpertinger.Edge.Kernel;
 
-public sealed class AuthorityEpochStore : IAsyncDisposable
+internal interface IAuthorityEpochStore : IAsyncDisposable
+{
+    Task<ulong> NextAsync(CancellationToken cancellationToken = default);
+}
+
+public sealed class AuthorityEpochStore : IAuthorityEpochStore
 {
     private const int RecordBytes = 40;
     private static readonly byte[] Domain = Encoding.ASCII.GetBytes("WLEP-v1");
