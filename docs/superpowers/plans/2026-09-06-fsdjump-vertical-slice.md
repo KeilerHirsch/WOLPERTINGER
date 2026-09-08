@@ -593,15 +593,15 @@ git commit -m "feat: add deterministic SPARK state machine"
 - stdout produces `uint32_be length || CBOR kernel-response` frames only.
 - stderr is non-protocol diagnostics.
 - Each successful/idempotent observation result includes the current 32-byte SHA-256 state digest.
-- [ ] **Step 1: Write failing frame parser tests**
+- [x] **Step 1: Write failing frame parser tests**
 
 Cover zero length, length above 64 KiB, truncated frame, trailing bytes after a complete CBOR message, and two consecutive valid frames. Set the v1 maximum kernel payload to `65_536` bytes.
 
-- [ ] **Step 2: Implement strict big-endian stdio framing**
+- [x] **Step 2: Implement strict big-endian stdio framing**
 
 Read exactly four bytes, decode an unsigned big-endian length, reject `0` or `> 65_536`, then read exactly that many bytes. Never scan for magic bytes or attempt resynchronization inside a corrupted IPC stream; fail the kernel process so the supervisor can restart/replay it.
 
-- [ ] **Step 3: Define canonical authoritative-state bytes**
+- [x] **Step 3: Define canonical authoritative-state bytes**
 
 Encode state as a fixed-order CBOR array, not a map or memory dump:
 
@@ -619,22 +619,22 @@ Encode state as a fixed-order CBOR array, not a map or memory dump:
 
 For an unbound/absent field use the schema-defined neutral value; do not omit array positions.
 
-- [ ] **Step 4: Hash the canonical state with `GNAT.SHA256`**
+- [x] **Step 4: Hash the canonical state with `GNAT.SHA256`**
 
 Keep the SHA wrapper outside the SPARK proof boundary. Add a test that compares the Ada digest against a checked-in expected SHA-256 value generated from the exact canonical bytes.
-- [ ] **Step 5: Implement monotonic role/epoch control in the kernel executable**
+- [x] **Step 5: Implement monotonic role/epoch control in the kernel executable**
 
 Each process starts as `SHADOW` at epoch `0`. `SetRole(newEpoch, role)` is accepted only when `newEpoch > currentEpoch`; stale/equal role changes are rejected. Role/epoch are control state and are excluded from the authoritative state digest.
 
 Both roles apply observations and return facts/digests. The host may surface facts only from the kernel whose response epoch equals the supervisor's current epoch and whose role is active.
 
-- [ ] **Step 6: Complete the kernel main loop and response encoding**
+- [x] **Step 6: Complete the kernel main loop and response encoding**
 
 For each host frame: decode -> validate -> apply/control -> compute digest -> encode one response -> flush stdout. Protocol responses include response kind, status, current epoch, cursor when applicable, state digest, and optional `JumpFact`.
 
 No normal logging goes to stdout.
 
-- [ ] **Step 7: Run kernel protocol/digest tests and commit**
+- [x] **Step 7: Run kernel protocol/digest tests and commit**
 
 ```powershell
 Push-Location kernel/tests
