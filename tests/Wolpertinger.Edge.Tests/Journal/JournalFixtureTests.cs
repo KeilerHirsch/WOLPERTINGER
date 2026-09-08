@@ -56,6 +56,7 @@ public sealed class JournalFixtureTests
         var digest = Enumerable.Repeat((byte)(ordinal + 1), 32).ToArray();
         return new RawEvidenceReceipt(
             new EvidenceReference(ordinal, 0, checked((long)ordinal * 100), 100),
+            RawEvidenceSourceKind.LocalJournal,
             FixedBytes32.FromBytes(digest),
             DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_000 + (long)ordinal),
             DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_000_500 + (long)ordinal),

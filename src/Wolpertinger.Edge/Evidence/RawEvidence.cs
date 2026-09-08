@@ -18,6 +18,7 @@ public sealed record RawEvidenceInput(
 
 public sealed record RawEvidenceReceipt(
     EvidenceReference Reference,
+    RawEvidenceSourceKind SourceKind,
     FixedBytes32 EvidenceDigest,
     DateTimeOffset ObservedUtc,
     DateTimeOffset CommitUtc,

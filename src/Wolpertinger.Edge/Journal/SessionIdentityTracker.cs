@@ -53,6 +53,7 @@ public sealed class SessionIdentityTracker
 {
     private FixedBytes16? _pendingSessionId;
     private GalaxyRealm _pendingRealm = GalaxyRealm.Unknown;
+    private int? _expectedContinuationPart;
 
     public SessionBinding? CurrentBinding { get; private set; }
     public SessionIdentityResult Observe(RawEvidenceReceipt receipt, JsonElement root)
@@ -62,11 +63,16 @@ public sealed class SessionIdentityTracker
         {
             throw new InvalidOperationException("Journal normalization requires durable raw evidence.");
         }
+        if (receipt.SourceKind != RawEvidenceSourceKind.LocalJournal)
+        {
+            throw new InvalidDataException("Journal identity tracking requires LocalJournal evidence.");
+        }
 
         return JournalEventClassifier.Classify(root) switch
         {
             JournalEventKind.FileHeader => ObserveFileHeader(receipt, root),
             JournalEventKind.Commander or JournalEventKind.LoadGame => ObserveIdentityEvent(receipt, root),
+            JournalEventKind.Continued => ObserveContinued(root),
             _ => Snapshot(),
         };
     }
@@ -75,7 +81,20 @@ public sealed class SessionIdentityTracker
     {
         var version = GetOptionalString(root, "gameversion");
         var build = GetOptionalString(root, "build");
-        _pendingRealm = GalaxyRealmResolver.Resolve(version, build);
+        var realm = GalaxyRealmResolver.Resolve(version, build);
+
+        if (CurrentBinding is not null
+            && _expectedContinuationPart is int expectedPart
+            && TryGetPositivePart(root, "part", out var actualPart)
+            && actualPart == expectedPart
+            && realm == CurrentBinding.Profile.Realm)
+        {
+            _expectedContinuationPart = null;
+            return Snapshot();
+        }
+
+        _expectedContinuationPart = null;
+        _pendingRealm = realm;
         _pendingSessionId = DeriveSessionId(receipt.EvidenceDigest);
         CurrentBinding = null;
 
@@ -85,6 +104,15 @@ public sealed class SessionIdentityTracker
             _pendingSessionId,
             null,
             null);
+    }
+
+    private SessionIdentityResult ObserveContinued(JsonElement root)
+    {
+        _expectedContinuationPart = CurrentBinding is not null
+            && TryGetPositivePart(root, "Part", out var part)
+                ? part
+                : null;
+        return Snapshot();
     }
     private SessionIdentityResult ObserveIdentityEvent(RawEvidenceReceipt receipt, JsonElement root)
     {
@@ -196,6 +224,15 @@ public sealed class SessionIdentityTracker
         }
 
         return timestamp.ToUnixTimeMilliseconds();
+    }
+
+    private static bool TryGetPositivePart(JsonElement root, string propertyName, out int part)
+    {
+        part = 0;
+        return root.TryGetProperty(propertyName, out var value)
+            && value.ValueKind == JsonValueKind.Number
+            && value.TryGetInt32(out part)
+            && part > 0;
     }
 
     private static string? GetOptionalString(JsonElement root, string propertyName)

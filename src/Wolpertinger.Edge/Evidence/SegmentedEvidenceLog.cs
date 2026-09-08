@@ -187,6 +187,7 @@ public sealed class SegmentedEvidenceLog : IAsyncDisposable
         _previousDigest = recordDigest;
         return new RawEvidenceReceipt(
             reference,
+            input.SourceKind,
             FixedBytes32.FromBytes(recordDigest),
             input.ObservedUtc,
             DateTimeOffset.UtcNow,

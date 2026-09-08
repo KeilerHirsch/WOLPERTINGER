@@ -49,6 +49,23 @@ public sealed class FsdJumpNormalizerTests
             () => FsdJumpNormalizer.Normalize(Receipt(), json.RootElement, Binding()));
     }
 
+    [Fact]
+    public void NormalizeRejectsEvidenceFromNonJournalSource()
+    {
+        using var json = JsonDocument.Parse("""
+            {"event":"FSDJump","StarSystem":"Test","SystemAddress":1,"StarPos":[0,0,0],"JumpDist":1,"FuelUsed":1,"FuelLevel":10}
+            """);
+        var receipt = new RawEvidenceReceipt(
+            new EvidenceReference(4, 0, 400, 100),
+            RawEvidenceSourceKind.FrontierApi,
+            FixedBytes32.FromHex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"),
+            DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_001_000),
+            DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_001_200),
+            IsDurable: true);
+
+        Assert.Throws<InvalidDataException>(
+            () => FsdJumpNormalizer.Normalize(receipt, json.RootElement, Binding()));
+    }
     private static SessionBinding Binding()
         => new(
             FixedBytes16.FromHex("a0a1a2a3a4a5a6a7a8a9aaabacadaeaf"),
@@ -57,6 +74,7 @@ public sealed class FsdJumpNormalizerTests
     private static RawEvidenceReceipt Receipt()
         => new(
             new EvidenceReference(4, 0, 400, 100),
+            RawEvidenceSourceKind.LocalJournal,
             FixedBytes32.FromHex("202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f"),
             DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_001_000),
             DateTimeOffset.FromUnixTimeMilliseconds(1_700_000_001_200),
