@@ -18,7 +18,7 @@ public sealed class ExactReplayRunner
             Path.Combine(dataDirectory, "normalized", "observations.bin"), cancellationToken);
         var replayControl = Path.Combine(dataDirectory, "replay-control", Guid.NewGuid().ToString("N"), "authority-epochs.bin");
         var epochs = await AuthorityEpochStore.OpenAsync(replayControl, cancellationToken);
-        await using var supervisor = KernelSupervisor.Create(new KernelProcessOptions(kernelExecutable, TimeSpan.FromSeconds(5)), epochs, ledger);
+        await using var supervisor = KernelSupervisor.CreateForExactReplay(new KernelProcessOptions(kernelExecutable, TimeSpan.FromSeconds(5)), epochs, ledger);
         await supervisor.StartAsync(cancellationToken);
         var context = new ContextDecisionEngine(); var formatter = new CopilotOutputFormatter();
         var outputs = new List<CopilotOutput>();

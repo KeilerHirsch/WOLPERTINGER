@@ -118,7 +118,7 @@ public sealed class CborContractCodecTests
         Assert.Equal(1UL, response.Epoch);
         Assert.Equal(KernelRole.Active, response.Role);
         Assert.Null(response.Cursor);
-        Assert.Equal(FixedBytes32.FromHex("52094d19b4d413c54be6f0d0e8169453f397a785fbcdf7de2f07c86dbe9f79b9"), response.StateDigest);
+        Assert.Equal(FixedBytes32.FromHex("b7595034adfa3966f27cfbfdf1889621e09ae084b5a42d602ba12b1a2d6adcba"), response.StateDigest);
         Assert.Null(response.JumpFact);
     }
 
@@ -132,7 +132,7 @@ public sealed class CborContractCodecTests
         Assert.Equal(1UL, response.Epoch);
         Assert.Equal(KernelRole.Active, response.Role);
         Assert.Equal(new ObservationCursor(2, 0), response.Cursor);
-        Assert.Equal(FixedBytes32.FromHex("6a7b08d0f7bb2a7614719bf4644989015e1d66735a3fe2e42cdc7a5dd2dd1938"), response.StateDigest);
+        Assert.Equal(FixedBytes32.FromHex("c71b67e5b6a22923473ff6d3426a927b0d6c854fec911256b8c77b4912f897cf"), response.StateDigest);
         Assert.NotNull(response.JumpFact);
         Assert.Equal("W. Grantler NX-42", response.JumpFact!.StarSystem);
         Assert.Equal(1_234_567_890_123_456_789UL, response.JumpFact.SystemAddress);

@@ -73,6 +73,10 @@ procedure Test_State_Digest is
       State.Profile.Save_Epoch := 0;
       State.Has_Last_Cursor := True;
       State.Last_Cursor := (Evidence_Sequence => 2, Message_Ordinal => 0);
+      State.Last_Message_Count := 1;
+      for I in State.Last_Digest'Range loop
+         State.Last_Digest (I) := Interfaces.Unsigned_8 (16#1F# + I);
+      end loop;
       State.Location.Known := True;
       State.Location.System_Address := 1_234_567_890_123_456_789;
       State.Location.Star_System := Text.To_Text_128 ("W. Grantler NX-42");
@@ -87,7 +91,7 @@ procedure Test_State_Digest is
       State.Fuel.Used := (Coefficient => 4_843_642, Exponent => -6);
       State.Fuel.Provenance := Types.Local_Journal;
       State.Fuel.Freshness := State_Types.Current;
-      State.Last_Jump.Jump_Distance := (Coefficient => 55_359, Exponent => -3);
+      State.Last_Jump_Distance := (Coefficient => 55_359, Exponent => -3);
       return State;
    end Populated_State;
    function Session_State return State_Types.Kernel_State is
@@ -102,6 +106,10 @@ procedure Test_State_Digest is
       State.Profile.Save_Epoch := 0;
       State.Has_Last_Cursor := True;
       State.Last_Cursor := (Evidence_Sequence => 1, Message_Ordinal => 0);
+      State.Last_Message_Count := 1;
+      for I in State.Last_Digest'Range loop
+         State.Last_Digest (I) := Interfaces.Unsigned_8 (I - 1);
+      end loop;
       return State;
    end Session_State;
    procedure Empty_State_Uses_Neutral_Positions is
@@ -140,6 +148,47 @@ procedure Test_State_Digest is
          "Fuel.Used must affect authoritative state digest");
    end Fuel_Used_Is_Part_Of_State_Identity;
 
+   procedure Fuel_Known_Is_Part_Of_State_Identity is
+      Left  : constant State_Types.Kernel_State := (others => <>);
+      Right : State_Types.Kernel_State := (others => <>);
+   begin
+      Right.Fuel.Known := True;
+      Assert.Assert
+        (Digest.State_Digest (Left) /= Digest.State_Digest (Right),
+         "Fuel.Known must affect authoritative state digest");
+   end Fuel_Known_Is_Part_Of_State_Identity;
+
+   procedure Last_Message_Count_Is_Part_Of_State_Identity is
+      Left  : State_Types.Kernel_State := Populated_State;
+      Right : State_Types.Kernel_State := Populated_State;
+   begin
+      Left.Last_Message_Count := 1;
+      Right.Last_Message_Count := 2;
+      Assert.Assert
+        (Digest.State_Digest (Left) /= Digest.State_Digest (Right),
+         "Last_Message_Count must affect authoritative state digest");
+   end Last_Message_Count_Is_Part_Of_State_Identity;
+
+   procedure Last_Evidence_Digest_Is_Part_Of_State_Identity is
+      Left  : constant State_Types.Kernel_State := Populated_State;
+      Right : State_Types.Kernel_State := Populated_State;
+   begin
+      Right.Last_Digest (1) := 1;
+      Assert.Assert
+        (Digest.State_Digest (Left) /= Digest.State_Digest (Right),
+         "Last_Digest must affect authoritative state digest");
+   end Last_Evidence_Digest_Is_Part_Of_State_Identity;
+
+   procedure Has_Last_Cursor_Is_Part_Of_State_Identity is
+      Left  : constant State_Types.Kernel_State := Populated_State;
+      Right : State_Types.Kernel_State := Populated_State;
+   begin
+      Right.Has_Last_Cursor := False;
+      Assert.Assert
+        (Digest.State_Digest (Left) /= Digest.State_Digest (Right),
+         "Has_Last_Cursor must affect authoritative state digest");
+   end Has_Last_Cursor_Is_Part_Of_State_Identity;
+
    procedure Session_State_Matches_Golden_Bytes_And_Digest is
       State         : constant State_Types.Kernel_State := Session_State;
       Expected      : constant SSE.Storage_Array :=
@@ -161,4 +210,8 @@ begin
    Session_State_Matches_Golden_Bytes_And_Digest;
    Populated_State_Matches_Golden_Bytes_And_Digest;
    Fuel_Used_Is_Part_Of_State_Identity;
+   Fuel_Known_Is_Part_Of_State_Identity;
+   Last_Message_Count_Is_Part_Of_State_Identity;
+   Last_Evidence_Digest_Is_Part_Of_State_Identity;
+   Has_Last_Cursor_Is_Part_Of_State_Identity;
 end Test_State_Digest;

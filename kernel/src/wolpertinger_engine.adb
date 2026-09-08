@@ -10,7 +10,7 @@ package body Wolpertinger_Engine with SPARK_Mode is
          System_Address      => State.Location.System_Address,
          Star_System         => State.Location.Star_System,
          Position            => State.Location.Position,
-         Jump_Distance       => State.Last_Jump.Jump_Distance,
+         Jump_Distance       => State.Last_Jump_Distance,
          Fuel_Used           => State.Fuel.Used,
          Fuel_Level          => State.Fuel.Level,
          Location_Provenance => State.Location.Provenance,
@@ -73,7 +73,7 @@ package body Wolpertinger_Engine with SPARK_Mode is
             Candidate.Fuel.Used := Observation.Jump.Fuel_Used;
             Candidate.Fuel.Provenance := Observation.Provenance;
             Candidate.Fuel.Freshness := State_Types.Current;
-            Candidate.Last_Jump := Observation.Jump;
+            Candidate.Last_Jump_Distance := Observation.Jump.Jump_Distance;
       end case;
 
       Candidate.Has_Last_Cursor := True;

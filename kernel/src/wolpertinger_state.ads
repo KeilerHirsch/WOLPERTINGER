@@ -36,7 +36,7 @@ package Wolpertinger_State with SPARK_Mode is
       Last_Message_Count : Interfaces.Unsigned_16 := 1;
       Location           : Location_State;
       Fuel               : Fuel_State;
-      Last_Jump          : Types.FSD_Jump_Data;
+      Last_Jump_Distance : Types.Decimal_64;
    end record;
 
    function Same_Profile
