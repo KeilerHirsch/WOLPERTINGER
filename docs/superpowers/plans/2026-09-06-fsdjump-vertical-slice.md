@@ -917,7 +917,7 @@ git commit -m "test: verify fail-closed recovery semantics"
 **Interfaces:**
 - Documents exactly what exists after this plan; no future feature is described as implemented.
 - CI executes the same .NET tests, Ada runtime tests, SPARK proof, and full integration path required locally.
-- [ ] **Step 1: Update public docs to match the architecture that now exists**
+- [x] **Step 1: Update public docs to match the architecture that now exists**
 
 Change README foundation language to: `.NET 10 Edge/Core Host + narrow Ada/SPARK Trusted Kernel`. Keep the project-status wording factual. Update ROADMAP so FuE/foundation freeze are complete and the first FSDJump vertical slice is marked implemented only after all acceptance tests pass.
 
@@ -925,7 +925,7 @@ Create `docs/architecture/vertical-slice-v0.md` with the concrete process/data f
 
 Update `NOTICE.md` from its research-phase placeholder to the actual runtime dependency inventory: `System.Formats.Cbor 10.0.11` (MIT), `Microsoft.Data.Sqlite 10.0.11` (MIT), and `cbor_ada 0.3.0` at commit `b448c366117ff9f6c050b13d4fe609bb79495759` (Apache-2.0). State that each dependency retains its own licence; do not imply those components are relicensed under EUPL.
 
-- [ ] **Step 2: Add one Windows CI job matching the supported development target**
+- [x] **Step 2: Add one Windows CI job matching the supported development target**
 
 Use:
 
@@ -942,7 +942,7 @@ Use:
 
 Then non-interactively select `gnat_native=16.1.0` and `gprbuild=26.0.1`, build the kernel with the validation profile, run Ada tests/proofs, build .NET Release, and run all .NET tests including real-kernel integration tests.
 
-- [ ] **Step 3: Run the complete local acceptance gate from a clean build**
+- [x] **Step 3: Run the complete local acceptance gate from a clean build**
 
 ```powershell
 dotnet clean WOLPERTINGER.slnx -c Release
@@ -953,10 +953,10 @@ Push-Location kernel; alr build --validation; Pop-Location
 Push-Location kernel/tests; alr build --validation; alr run; Pop-Location
 Push-Location kernel/proof; alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all; Pop-Location
 ```
-- [ ] **Step 4: Run the actual host once in ingest and replay mode**
+- [x] **Step 4: Run the actual host once in ingest and replay mode**
 
 ```powershell
-$kernel = (Resolve-Path 'kernel\bin\wolpertinger_kernel.exe').Path
+$kernel = (Resolve-Path 'kernel\bin\wolpertinger_kernel_main.exe').Path
 $data = Join-Path $env:TEMP 'wolpertinger-v0-acceptance'
 Remove-Item -Recurse -Force $data -ErrorAction SilentlyContinue
 dotnet run --project src/Wolpertinger.Host -c Release -- ingest --journal fixtures/journal/live-v4-fsdjump-session.jsonl --data $data --kernel $kernel
@@ -965,7 +965,7 @@ dotnet run --project src/Wolpertinger.Host -c Release -- replay --data $data --k
 
 Expected: both commands succeed; each run emits the same one deterministic jump-output text, and replay reports the same final state digest as the ingest run.
 
-- [ ] **Step 5: Run repository hygiene checks**
+- [x] **Step 5: Run repository hygiene checks**
 
 ```powershell
 git diff --check
@@ -975,7 +975,7 @@ git grep -nEI '(api[_-]?key|client[_-]?secret|password|bearer[[:space:]]+[A-Za-z
 
 Expected: no whitespace errors, only intended tracked changes before the documentation commit, and no credential-like material.
 
-- [ ] **Step 6: Commit docs/CI and run the final gate again**
+- [x] **Step 6: Commit docs/CI and run the final gate again**
 
 ```powershell
 git add README.md ROADMAP.md NOTICE.md .github/workflows/ci.yml docs/architecture/vertical-slice-v0.md
