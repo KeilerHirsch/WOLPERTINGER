@@ -557,7 +557,7 @@ Run:
 
 ```powershell
 Push-Location kernel/proof
-alr gnatprove -- -P wolpertinger_kernel_proof.gpr --level=2 --report=all
+alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all
 Pop-Location
 ```
 
@@ -570,7 +570,7 @@ alr build
 alr run
 Pop-Location
 Push-Location kernel/proof
-alr gnatprove -- -P wolpertinger_kernel_proof.gpr --level=2 --report=all
+alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all
 Pop-Location
 git add kernel/src/wolpertinger_bounded_text.* kernel/src/wolpertinger_state.* kernel/src/wolpertinger_facts.ads kernel/src/wolpertinger_engine.* kernel/tests kernel/proof
 git commit -m "feat: add deterministic SPARK state machine"
@@ -642,7 +642,7 @@ alr build
 alr run
 Pop-Location
 Push-Location kernel/proof
-alr gnatprove -- -P wolpertinger_kernel_proof.gpr --level=2 --report=all
+alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all
 Pop-Location
 git add kernel/src kernel/tests kernel/proof fixtures/contracts
 git commit -m "feat: expose framed trusted kernel process"
@@ -949,7 +949,7 @@ dotnet build WOLPERTINGER.slnx -c Release
 dotnet test WOLPERTINGER.slnx -c Release
 Push-Location kernel; alr build --validation; Pop-Location
 Push-Location kernel/tests; alr build --validation; alr run; Pop-Location
-Push-Location kernel/proof; alr gnatprove -- -P wolpertinger_kernel_proof.gpr --level=2 --report=all; Pop-Location
+Push-Location kernel/proof; alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all; Pop-Location
 ```
 - [ ] **Step 4: Run the actual host once in ingest and replay mode**
 
@@ -980,7 +980,7 @@ git add README.md ROADMAP.md NOTICE.md .github/workflows/ci.yml docs/architectur
 git commit -m "docs: document first vertical slice"
 dotnet test WOLPERTINGER.slnx -c Release
 Push-Location kernel/tests; alr run; Pop-Location
-Push-Location kernel/proof; alr gnatprove -- -P wolpertinger_kernel_proof.gpr --level=2 --report=all; Pop-Location
+Push-Location kernel/proof; alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all; Pop-Location
 git status --short
 ```
 
