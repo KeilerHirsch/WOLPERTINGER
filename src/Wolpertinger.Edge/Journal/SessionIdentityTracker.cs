@@ -56,6 +56,15 @@ public sealed class SessionIdentityTracker
     private int? _expectedContinuationPart;
 
     public SessionBinding? CurrentBinding { get; private set; }
+
+    public void Restore(SessionBinding binding)
+    {
+        ArgumentNullException.ThrowIfNull(binding);
+        CurrentBinding = binding;
+        _pendingSessionId = binding.SessionId;
+        _pendingRealm = binding.Profile.Realm;
+        _expectedContinuationPart = null;
+    }
     public SessionIdentityResult Observe(RawEvidenceReceipt receipt, JsonElement root)
     {
         ArgumentNullException.ThrowIfNull(receipt);

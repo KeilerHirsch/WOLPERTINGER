@@ -62,6 +62,16 @@ public sealed class KernelSupervisor : IAsyncDisposable
         await Task.WhenAll(
             _active.SetRoleAsync(CurrentEpoch, KernelRole.Active, cancellationToken),
             _shadow.SetRoleAsync(CurrentEpoch, KernelRole.Shadow, cancellationToken)).ConfigureAwait(false);
+
+        if (_replay is not null)
+        {
+            await foreach (var observation in _replay.ReadObservationsAsync(null, cancellationToken).ConfigureAwait(false))
+            {
+                var result = await ApplyToBothAsync(observation, cancellationToken).ConfigureAwait(false);
+                if (!IsCommittedStateResult(result.Status))
+                    throw new InvalidDataException($"Startup replay failed closed with kernel status {result.Status}.");
+            }
+        }
         _started = true;
     }
 
