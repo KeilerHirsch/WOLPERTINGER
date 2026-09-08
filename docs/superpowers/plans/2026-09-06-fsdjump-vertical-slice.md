@@ -813,10 +813,10 @@ git commit -m "feat: add rebuildable SQLite projections"
 - `ExactReplayRunner.RunAsync(...)` reads only the normalized ledger, drives fresh kernels, and returns final agreed state digest plus deterministic outputs.
 - `Wolpertinger.Host` exposes only minimal `ingest` and `replay` commands for this slice.
 
-- [ ] **Step 1: Write a failing end-to-end integration test using the fixture**
+- [x] **Step 1: Write a failing end-to-end integration test using the fixture**
 
 The test creates a fresh temp data directory, builds/locates the real Ada kernel executable, processes the fixture line-by-line, and asserts exactly one authoritative `JumpCompleted` output after the FSDJump.
-- [ ] **Step 2: Implement the live/offline line-processing pipeline in the frozen order**
+- [x] **Step 2: Implement the live/offline line-processing pipeline in the frozen order**
 
 For each complete JSONL line execute only this sequence:
 
@@ -830,7 +830,7 @@ append raw evidence + durable flush
 
 A rejected/ignored normalization writes a diagnostic/disposition and stops for that raw record without consuming a kernel `EvidenceSequence`.
 
-- [ ] **Step 3: Write a failing exact-replay test**
+- [x] **Step 3: Write a failing exact-replay test**
 
 After one successful ingest, save the final agreed digest and output list. Start a fresh pair of kernels with an empty authoritative state, read the normalized ledger from sequence 1, replay every dispatchable observation, and assert the final digest and deterministic output list equal the live run.
 
@@ -839,11 +839,11 @@ Assert.Equal(live.FinalStateDigest, replay.FinalStateDigest);
 Assert.Equal(live.Outputs, replay.Outputs);
 ```
 
-- [ ] **Step 4: Implement `ExactReplayRunner` without reading raw JSON or SQLite**
+- [x] **Step 4: Implement `ExactReplayRunner` without reading raw JSON or SQLite**
 
 Replay consumes `IObservationReplaySource`, uses a fresh supervisor/kernel pair, passes each persisted observation unchanged, and feeds only newly `Applied` Active facts through the same `ContextDecisionEngine` and formatter.
 
-- [ ] **Step 5: Add the minimal headless CLI**
+- [x] **Step 5: Add the minimal headless CLI**
 
 Support:
 
@@ -853,7 +853,7 @@ wolpertinger-host replay --data <directory> --kernel <kernel-executable>
 ```
 
 Print `CopilotOutput.Text` to stdout and diagnostics to stderr. Do not add a CLI framework dependency.
-- [ ] **Step 6: Run the happy-path integration/replay tests and commit**
+- [x] **Step 6: Run the happy-path integration/replay tests and commit**
 
 ```powershell
 dotnet test tests/Wolpertinger.Integration.Tests/Wolpertinger.Integration.Tests.csproj -c Release --filter "FullyQualifiedName~FsdJumpVerticalSliceTests|FullyQualifiedName~ExactReplayTests"
