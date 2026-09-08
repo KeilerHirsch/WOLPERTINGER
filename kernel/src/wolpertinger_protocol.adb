@@ -1,6 +1,5 @@
 with CBOR.Decoding;
 with CBOR.Encoding;
-with Interfaces;
 with System.Storage_Elements;
 
 package body Wolpertinger_Protocol is
@@ -504,5 +503,146 @@ package body Wolpertinger_Protocol is
             return Result;
       end;
    end Decode_Observation;
+
+   function Decode_Host_Message
+     (Data : CBOR.Byte_Array) return Host_Decode_Result
+   is
+      R      : CBOR.Decode_All_Result;
+      Result : Host_Decode_Result;
+
+      function Unsigned_At (Index : Positive) return CBOR.UInt64 is
+         Item : CBOR.CBOR_Item;
+      begin
+         if Index > Natural (R.Count) then
+            raise Schema_Error;
+         end if;
+         Item := R.Items (CBOR.Item_Range (Index));
+         if Item.Kind /= CBOR.MT_Unsigned_Integer then
+            raise Schema_Error;
+         end if;
+         return Item.UInt_Value;
+      end Unsigned_At;
+   begin
+      if Data'Length > Maximum_Payload_Bytes then
+         Result.Status := Resource_Limit;
+         return Result;
+      end if;
+
+      R := Dec.Decode_All_Strict
+        (Data, Check_UTF8 => True, Max_String_Len => 128, Max_Depth => 4);
+      if R.Status /= CBOR.OK then
+         Result.Status :=
+           (if Is_Resource_Error (R.Status) then Resource_Limit else Invalid_CBOR);
+         return Result;
+      end if;
+      begin
+         if R.Count < 3
+           or else R.Items (1).Kind /= CBOR.MT_Map
+           or else Unsigned_At (2) /= 0
+         then
+            raise Schema_Error;
+         end if;
+
+         case Unsigned_At (3) is
+            when 1 =>
+               if R.Items (1).Map_Count /= 3
+                 or else Natural (R.Count) /= 7
+                 or else Unsigned_At (4) /= 1
+                 or else Unsigned_At (6) /= 2
+               then
+                  raise Schema_Error;
+               end if;
+               Result.Kind := Set_Role_Message;
+               Result.Epoch := Interfaces.Unsigned_64 (Unsigned_At (5));
+               case Unsigned_At (7) is
+                  when 0 => Result.Role := Wolpertinger_Control.Shadow;
+                  when 1 => Result.Role := Wolpertinger_Control.Active;
+                  when others => raise Schema_Error;
+               end case;
+               Result.Status := OK;
+
+            when 2 =>
+               declare
+                  Observation_Result : constant Decode_Result := Decode_Observation (Data);
+               begin
+                  Result.Status := Observation_Result.Status;
+                  Result.Kind := Apply_Observation_Message;
+                  Result.Observation := Observation_Result.Observation;
+               end;
+
+            when others =>
+               raise Schema_Error;
+         end case;
+         return Result;
+      exception
+         when Schema_Error | Constraint_Error =>
+            Result.Status := Invalid_Schema;
+            return Result;
+      end;
+   end Decode_Host_Message;
+
+   function Encode_Cursor
+     (Value : Types.Observation_Cursor) return CBOR.Byte_Array is
+     (Enc.Encode_Array (2)
+      & Enc.Encode_Unsigned (CBOR.UInt64 (Value.Evidence_Sequence))
+      & Enc.Encode_Unsigned (CBOR.UInt64 (Value.Message_Ordinal)));
+
+   function Encode_Jump_Fact
+     (Value : Wolpertinger_Facts.Jump_Fact) return CBOR.Byte_Array
+   is
+      Star : constant CBOR.Byte_Array := To_CBOR (Value.Star_System);
+   begin
+      if Value.Star_System.Length not in 1 .. 128
+        or else not Dec.Is_Valid_UTF8 (Star)
+      then
+         raise Constraint_Error with "invalid JumpFact StarSystem";
+      end if;
+
+      return Enc.Encode_Array (11)
+        & Encode_Cursor (Value.Cursor)
+        & Enc.Encode_Unsigned (CBOR.UInt64 (Value.System_Address))
+        & Enc.Encode_Text_String_UTF8 (Star)
+        & Enc.Encode_Array (3)
+        & Encode_Decimal (Value.Position.X)
+        & Encode_Decimal (Value.Position.Y)
+        & Encode_Decimal (Value.Position.Z)
+        & Encode_Decimal (Value.Jump_Distance)
+        & Encode_Decimal (Value.Fuel_Used)
+        & Encode_Decimal (Value.Fuel_Level)
+        & Enc.Encode_Unsigned
+            (CBOR.UInt64 (Types.Source_Provenance'Pos (Value.Location_Provenance)))
+        & Enc.Encode_Unsigned
+            (CBOR.UInt64
+               (Wolpertinger_Facts.State_Types.Freshness_State'Pos
+                  (Value.Location_Freshness)))
+        & Enc.Encode_Unsigned
+            (CBOR.UInt64 (Types.Source_Provenance'Pos (Value.Fuel_Provenance)))
+        & Enc.Encode_Unsigned
+            (CBOR.UInt64
+               (Wolpertinger_Facts.State_Types.Freshness_State'Pos
+                  (Value.Fuel_Freshness)));
+   end Encode_Jump_Fact;
+
+   function Encode_Response
+     (Value : Kernel_Response) return CBOR.Byte_Array is
+      Cursor_Value : constant CBOR.Byte_Array :=
+        (if Value.Has_Cursor then Encode_Cursor (Value.Cursor) else Enc.Encode_Null);
+      Jump_Value : constant CBOR.Byte_Array :=
+        (if Value.Has_Jump_Fact then Encode_Jump_Fact (Value.Jump) else Enc.Encode_Null);
+   begin
+      return Enc.Encode_Map (6)
+        & Enc.Encode_Unsigned (0)
+        & Enc.Encode_Unsigned (CBOR.UInt64 (Kernel_Response_Kind'Pos (Value.Kind) + 1))
+        & Enc.Encode_Unsigned (1)
+        & Enc.Encode_Unsigned (CBOR.UInt64 (Kernel_Response_Status'Pos (Value.Status)))
+        & Enc.Encode_Unsigned (2)
+        & Enc.Encode_Unsigned (CBOR.UInt64 (Value.Epoch))
+        & Enc.Encode_Unsigned (3)
+        & Cursor_Value
+        & Enc.Encode_Unsigned (4)
+        & Enc.Encode_Byte_String (To_CBOR (Value.State_Digest))
+        & Enc.Encode_Unsigned (5)
+        & Jump_Value;
+   end Encode_Response;
 
 end Wolpertinger_Protocol;

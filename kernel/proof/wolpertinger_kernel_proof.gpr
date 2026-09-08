@@ -7,6 +7,8 @@ project Wolpertinger_Kernel_Proof is
       "wolpertinger_bounded_text.adb",
       "wolpertinger_state.ads",
       "wolpertinger_state.adb",
+      "wolpertinger_control.ads",
+      "wolpertinger_control.adb",
       "wolpertinger_facts.ads",
       "wolpertinger_engine.ads",
       "wolpertinger_engine.adb");
