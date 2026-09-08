@@ -22,7 +22,7 @@ public sealed record NormalizedObservationCommit(
     ObservationEnvelope? Observation,
     bool IsDurable);
 
-public sealed class NormalizedObservationLedger : IAsyncDisposable
+public sealed class NormalizedObservationLedger : IObservationReplaySource, IAsyncDisposable
 {
     private const int SchemaVersion = 1;
     private const int NormalizerVersion = 1;
@@ -132,6 +132,29 @@ public sealed class NormalizedObservationLedger : IAsyncDisposable
             _gate.Release();
         }
     }
+    public async IAsyncEnumerable<ObservationEnvelope> ReadObservationsAsync(
+        ObservationCursor? after,
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        NormalizedLedgerEntry[] snapshot;
+        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try { snapshot = _entries.ToArray(); }
+        finally { _gate.Release(); }
+
+        foreach (var entry in snapshot)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (entry.EnvelopeBytes is null) continue;
+            var observation = CborContractCodec.DecodeObservation(entry.EnvelopeBytes);
+            if (after is null || Compare(observation.Cursor, after.Value) > 0)
+                yield return observation;
+        }
+    }
+
+    private static int Compare(ObservationCursor left, ObservationCursor right)
+        => left.EvidenceSequence != right.EvidenceSequence
+            ? left.EvidenceSequence.CompareTo(right.EvidenceSequence)
+            : left.MessageOrdinal.CompareTo(right.MessageOrdinal);
     private async Task RecoverAsync(CancellationToken cancellationToken)
     {
         _entries.Clear();
