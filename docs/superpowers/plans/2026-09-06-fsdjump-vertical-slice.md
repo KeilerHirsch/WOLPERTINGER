@@ -557,7 +557,7 @@ Run:
 
 ```powershell
 Push-Location kernel/proof
-alr gnatprove -- -P wolpertinger_kernel_proof.gpr --level=2 --report=all
+alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all
 Pop-Location
 ```
 
@@ -570,7 +570,7 @@ alr build
 alr run
 Pop-Location
 Push-Location kernel/proof
-alr gnatprove -- -P wolpertinger_kernel_proof.gpr --level=2 --report=all
+alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all
 Pop-Location
 git add kernel/src/wolpertinger_bounded_text.* kernel/src/wolpertinger_state.* kernel/src/wolpertinger_facts.ads kernel/src/wolpertinger_engine.* kernel/tests kernel/proof
 git commit -m "feat: add deterministic SPARK state machine"
@@ -593,15 +593,15 @@ git commit -m "feat: add deterministic SPARK state machine"
 - stdout produces `uint32_be length || CBOR kernel-response` frames only.
 - stderr is non-protocol diagnostics.
 - Each successful/idempotent observation result includes the current 32-byte SHA-256 state digest.
-- [ ] **Step 1: Write failing frame parser tests**
+- [x] **Step 1: Write failing frame parser tests**
 
 Cover zero length, length above 64 KiB, truncated frame, trailing bytes after a complete CBOR message, and two consecutive valid frames. Set the v1 maximum kernel payload to `65_536` bytes.
 
-- [ ] **Step 2: Implement strict big-endian stdio framing**
+- [x] **Step 2: Implement strict big-endian stdio framing**
 
 Read exactly four bytes, decode an unsigned big-endian length, reject `0` or `> 65_536`, then read exactly that many bytes. Never scan for magic bytes or attempt resynchronization inside a corrupted IPC stream; fail the kernel process so the supervisor can restart/replay it.
 
-- [ ] **Step 3: Define canonical authoritative-state bytes**
+- [x] **Step 3: Define canonical authoritative-state bytes**
 
 Encode state as a fixed-order CBOR array, not a map or memory dump:
 
@@ -613,28 +613,30 @@ Encode state as a fixed-order CBOR array, not a map or memory dump:
   has-location, system-address, star-system, location-provenance, location-freshness,
   fuel-provenance, fuel-freshness,
   [x-decimal64, y-decimal64, z-decimal64],
-  fuel-level-decimal64, last-jump-distance-decimal64
+  fuel-level-decimal64, fuel-used-decimal64, last-jump-distance-decimal64
 ]
 ```
 
 For an unbound/absent field use the schema-defined neutral value; do not omit array positions.
 
-- [ ] **Step 4: Hash the canonical state with `GNAT.SHA256`**
+- [x] **Step 4: Hash the canonical state with `GNAT.SHA256`**
 
 Keep the SHA wrapper outside the SPARK proof boundary. Add a test that compares the Ada digest against a checked-in expected SHA-256 value generated from the exact canonical bytes.
-- [ ] **Step 5: Implement monotonic role/epoch control in the kernel executable**
+- [x] **Step 5: Implement monotonic role/epoch control in the kernel executable**
 
 Each process starts as `SHADOW` at epoch `0`. `SetRole(newEpoch, role)` is accepted only when `newEpoch > currentEpoch`; stale/equal role changes are rejected. Role/epoch are control state and are excluded from the authoritative state digest.
 
 Both roles apply observations and return facts/digests. The host may surface facts only from the kernel whose response epoch equals the supervisor's current epoch and whose role is active.
 
-- [ ] **Step 6: Complete the kernel main loop and response encoding**
+- [x] **Step 6: Complete the kernel main loop and response encoding**
 
-For each host frame: decode -> validate -> apply/control -> compute digest -> encode one response -> flush stdout. Protocol responses include response kind, status, current epoch, cursor when applicable, state digest, and optional `JumpFact`.
+For each host frame: decode -> validate -> apply/control -> compute digest -> encode one response -> flush stdout. Protocol responses include response kind, status, current epoch, the kernel's current role, cursor when applicable, state digest, and optional `JumpFact`.
 
 No normal logging goes to stdout.
 
-- [ ] **Step 7: Run kernel protocol/digest tests and commit**
+Framing corruption (truncated header/payload, zero length, or oversize length) terminates the kernel process with a non-zero exit and no protocol stdout. A complete frame containing invalid CBOR/schema data returns a deterministic `INVALID_MESSAGE` response instead of attempting stream resynchronization.
+
+- [x] **Step 7: Run kernel protocol/digest tests and commit**
 
 ```powershell
 Push-Location kernel/tests
@@ -642,7 +644,7 @@ alr build
 alr run
 Pop-Location
 Push-Location kernel/proof
-alr gnatprove -- -P wolpertinger_kernel_proof.gpr --level=2 --report=all
+alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all
 Pop-Location
 git add kernel/src kernel/tests kernel/proof fixtures/contracts
 git commit -m "feat: expose framed trusted kernel process"
@@ -662,7 +664,7 @@ git commit -m "feat: expose framed trusted kernel process"
 **Interfaces:**
 - `KernelProcessClient.StartAsync`, `SetRoleAsync`, `ApplyAsync`, and `StopAsync` wrap one Ada child process.
 - `KernelSupervisor.ApplyAsync(ObservationEnvelope)` fans out identical bytes to both kernels, compares cursor/digest, and returns only fenced Active output.
-- [ ] **Step 1: Write failing epoch-store tests**
+- [x] **Step 1: Write failing epoch-store tests**
 
 Use an append-only `control/authority-epochs.bin` record of `epoch:u64_be || sha256("WLEP-v1" || epoch)`. Test clean creation, monotonic increments, truncated-tail recovery, and corrupted completed record rejection.
 
@@ -671,7 +673,7 @@ Assert.Equal(1UL, await store.NextAsync(ct));
 Assert.Equal(2UL, await store.NextAsync(ct));
 ```
 
-- [ ] **Step 2: Implement `IKernelProcessClient` and the real stdio client**
+- [x] **Step 2: Implement `IKernelProcessClient` and the real stdio client**
 
 Introduce an internal interface for deterministic unit fakes and one production implementation that launches `wolpertinger_kernel[.exe]` with redirected stdin/stdout/stderr. Serialize writes through one async lock per process and enforce one response per request.
 
@@ -682,18 +684,18 @@ Task<KernelApplyResult> ApplyAsync(ObservationEnvelope observation, Cancellation
 
 If framing, EOF, timeout, protocol decoding, or child exit occurs, mark that client unhealthy and stop using the channel.
 
-- [ ] **Step 3: Write failing supervisor fan-out/fencing tests with fake clients**
+- [x] **Step 3: Write failing supervisor fan-out/fencing tests with fake clients**
 
 Assert that identical envelope bytes are sent to Active and Shadow, both results must report the same cursor/digest, only the Active fact is returned, stale-epoch output is rejected, and mismatched digests raise `KernelDivergenceException`.
 
-- [ ] **Step 4: Implement the minimal supervisor state machine**
+- [x] **Step 4: Implement the minimal supervisor state machine**
 
 On startup allocate a fresh epoch, start two kernels, assign A=`ACTIVE`, B=`SHADOW`, and retain the last agreed cursor/digest. `ApplyAsync` waits for both results before publishing an Active fact under normal healthy operation.
-- [ ] **Step 5: Add failover/rejoin tests before implementation**
+- [x] **Step 5: Add failover/rejoin tests before implementation**
 
 Cover two paths. Shadow failure: Active remains authoritative, a new Shadow is started at the current epoch and catches up by replay. Active failure: require a valid caught-up Shadow result, allocate a new epoch, promote Shadow, reject any late old-epoch Active response, then restart/catch up the failed process as the new Shadow.
 
-- [ ] **Step 6: Implement replay-assisted kernel rejoin**
+- [x] **Step 6: Implement replay-assisted kernel rejoin**
 
 Add `IObservationReplaySource` to the persistence boundary:
 
@@ -705,7 +707,7 @@ IAsyncEnumerable<ObservationEnvelope> ReadObservationsAsync(
 
 A fresh kernel replays from sequence 1; a future checkpoint may supply `after`. Rejoin succeeds only when the rebuilt Shadow reaches the supervisor's current agreed cursor and state digest.
 
-- [ ] **Step 7: Run supervisor tests and commit**
+- [x] **Step 7: Run supervisor tests and commit**
 
 ```powershell
 dotnet test tests/Wolpertinger.Edge.Tests/Wolpertinger.Edge.Tests.csproj -c Release --filter FullyQualifiedName~Kernel
@@ -727,7 +729,7 @@ git commit -m "feat: supervise active and shadow kernels"
 **Interfaces:**
 - Consumes the fenced Active `JumpFact` returned by `KernelSupervisor`.
 - Produces a plain headless `CopilotOutput` with no AI or presentation dependency.
-- [ ] **Step 1: Write failing context/output tests**
+- [x] **Step 1: Write failing context/output tests**
 
 For one fixed `JumpFact`, assert one `Surface=true` decision with reason code `JumpCompleted`, channel `Display`, and no speech/AI side effect. Assert identical input produces byte-for-byte identical UTF-8 output text.
 
@@ -738,11 +740,11 @@ Assert.Equal("JumpCompleted", decision.ReasonCode);
 Assert.Equal(OutputChannel.Display, decision.Channel);
 ```
 
-- [ ] **Step 2: Implement the first deterministic policy**
+- [x] **Step 2: Implement the first deterministic policy**
 
 The v0 policy deliberately has one rule: a newly applied authoritative `JumpFact` is display-worthy. Idempotent kernel results do not create a second output.
 
-- [ ] **Step 3: Implement invariant formatting without floating point**
+- [x] **Step 3: Implement invariant formatting without floating point**
 
 Format using `Decimal64.ToString()` and stable punctuation:
 
@@ -752,7 +754,7 @@ Jump complete: <StarSystem> - <JumpDistance> ly, fuel <FuelLevel> t.
 
 `CopilotOutput` also carries the observation cursor, evidence digest/reference, state digest, and reason code so diagnostics can answer why it was emitted.
 
-- [ ] **Step 4: Run tests and commit**
+- [x] **Step 4: Run tests and commit**
 
 ```powershell
 dotnet test tests/Wolpertinger.Edge.Tests/Wolpertinger.Edge.Tests.csproj -c Release --filter "FullyQualifiedName~Context|FullyQualifiedName~Output"
@@ -773,22 +775,22 @@ git commit -m "feat: add deterministic jump copilot output"
 - `ProjectionRebuilder.RebuildAsync(...)` deletes/recreates the database from replay-produced outputs.
 - No kernel or replay code reads SQLite to determine authoritative truth.
 
-- [ ] **Step 1: Write failing projection tests**
+- [x] **Step 1: Write failing projection tests**
 
 Assert schema creation, one latest-jump row per profile, one output row per cursor, idempotent re-application, and exact preservation of state/evidence digests.
 
-- [ ] **Step 2: Implement the minimal schema with raw SQL**
+- [x] **Step 2: Implement the minimal schema with raw SQL**
 
 Use `Microsoft.Data.Sqlite` directly; no ORM. Create `projection_meta`, `latest_jump`, and `copilot_output`. Store `SystemAddress` as invariant decimal text to avoid accidental signed conversion; store digests as 32-byte BLOBs and Decimal64 display values as canonical text.
 
-- [ ] **Step 3: Write a failing delete-and-rebuild test**
+- [x] **Step 3: Write a failing delete-and-rebuild test**
 
 Populate projections, close the database, delete `projections.db`, run the rebuilder from deterministic replay outputs, and assert the recreated logical rows match the original rows exactly.
 
-- [ ] **Step 4: Implement rebuild as an explicit disposable-store operation**
+- [x] **Step 4: Implement rebuild as an explicit disposable-store operation**
 
 The rebuilder always creates a fresh schema and re-applies replay outputs in cursor order. It never attempts to recover authoritative state from SQLite.
-- [ ] **Step 5: Run projection tests and commit**
+- [x] **Step 5: Run projection tests and commit**
 
 ```powershell
 dotnet test tests/Wolpertinger.Edge.Tests/Wolpertinger.Edge.Tests.csproj -c Release --filter FullyQualifiedName~Projections
@@ -811,10 +813,10 @@ git commit -m "feat: add rebuildable SQLite projections"
 - `ExactReplayRunner.RunAsync(...)` reads only the normalized ledger, drives fresh kernels, and returns final agreed state digest plus deterministic outputs.
 - `Wolpertinger.Host` exposes only minimal `ingest` and `replay` commands for this slice.
 
-- [ ] **Step 1: Write a failing end-to-end integration test using the fixture**
+- [x] **Step 1: Write a failing end-to-end integration test using the fixture**
 
 The test creates a fresh temp data directory, builds/locates the real Ada kernel executable, processes the fixture line-by-line, and asserts exactly one authoritative `JumpCompleted` output after the FSDJump.
-- [ ] **Step 2: Implement the live/offline line-processing pipeline in the frozen order**
+- [x] **Step 2: Implement the live/offline line-processing pipeline in the frozen order**
 
 For each complete JSONL line execute only this sequence:
 
@@ -828,7 +830,7 @@ append raw evidence + durable flush
 
 A rejected/ignored normalization writes a diagnostic/disposition and stops for that raw record without consuming a kernel `EvidenceSequence`.
 
-- [ ] **Step 3: Write a failing exact-replay test**
+- [x] **Step 3: Write a failing exact-replay test**
 
 After one successful ingest, save the final agreed digest and output list. Start a fresh pair of kernels with an empty authoritative state, read the normalized ledger from sequence 1, replay every dispatchable observation, and assert the final digest and deterministic output list equal the live run.
 
@@ -837,11 +839,11 @@ Assert.Equal(live.FinalStateDigest, replay.FinalStateDigest);
 Assert.Equal(live.Outputs, replay.Outputs);
 ```
 
-- [ ] **Step 4: Implement `ExactReplayRunner` without reading raw JSON or SQLite**
+- [x] **Step 4: Implement `ExactReplayRunner` without reading raw JSON or SQLite**
 
 Replay consumes `IObservationReplaySource`, uses a fresh supervisor/kernel pair, passes each persisted observation unchanged, and feeds only newly `Applied` Active facts through the same `ContextDecisionEngine` and formatter.
 
-- [ ] **Step 5: Add the minimal headless CLI**
+- [x] **Step 5: Add the minimal headless CLI**
 
 Support:
 
@@ -851,7 +853,7 @@ wolpertinger-host replay --data <directory> --kernel <kernel-executable>
 ```
 
 Print `CopilotOutput.Text` to stdout and diagnostics to stderr. Do not add a CLI framework dependency.
-- [ ] **Step 6: Run the happy-path integration/replay tests and commit**
+- [x] **Step 6: Run the happy-path integration/replay tests and commit**
 
 ```powershell
 dotnet test tests/Wolpertinger.Integration.Tests/Wolpertinger.Integration.Tests.csproj -c Release --filter "FullyQualifiedName~FsdJumpVerticalSliceTests|FullyQualifiedName~ExactReplayTests"
@@ -869,26 +871,26 @@ git commit -m "feat: complete FSDJump vertical slice"
 **Interfaces:**
 - Exercises the already-defined public/internal boundaries; this task must not introduce a second recovery architecture.
 
-- [ ] **Step 1: Add invalid-numeric evidence-retention test**
+- [x] **Step 1: Add invalid-numeric evidence-retention test**
 
 Feed an FSDJump whose `FuelLevel` coefficient overflows Int64. Assert the raw record exists and validates in the Evidence Log, a rejected-normalization diagnostic/disposition exists, the normalized observation sequence does not advance, and neither kernel state digest changes.
 
-- [ ] **Step 2: Add identity-conflict fail-closed test**
+- [x] **Step 2: Add identity-conflict fail-closed test**
 
 After binding synthetic FID `F100`, feed a deliberately crafted bound-context observation for `F200`. Assert `IdentityConflict`, no `JumpFact`, no output, and no canonical-state mutation.
 
-- [ ] **Step 3: Add sequence/integrity fault tests against the real kernel process**
+- [x] **Step 3: Add sequence/integrity fault tests against the real kernel process**
 
 Send cursor 3 while cursor 2 is expected and assert `SequenceGap`. Resend the last accepted cursor with a different evidence digest and assert `IntegrityFault`. In both cases the returned state digest must equal the pre-fault digest.
-- [ ] **Step 4: Add real Active-process failover/rejoin test**
+- [x] **Step 4: Add real Active-process failover/rejoin test**
 
 Process `SessionBound`, kill the Active PID exposed through read-only supervisor diagnostics, then process the committed FSDJump observation. Assert the caught-up Shadow is promoted under a strictly larger epoch, produces the authoritative output, the killed kernel is restarted and replayed as Shadow, and both end on the same cursor/digest.
 
-- [ ] **Step 5: Add real Shadow-process restart/catch-up test**
+- [x] **Step 5: Add real Shadow-process restart/catch-up test**
 
 Kill the Shadow after `SessionBound`, process FSDJump through the surviving Active, restart the Shadow at the current epoch, replay it to current cursor, and assert digest equality without an authority-epoch change.
 
-- [ ] **Step 6: Run the complete failure suite and fix only demonstrated defects**
+- [x] **Step 6: Run the complete failure suite and fix only demonstrated defects**
 
 ```powershell
 dotnet test tests/Wolpertinger.Integration.Tests/Wolpertinger.Integration.Tests.csproj -c Release --filter "FullyQualifiedName~FailureSemantics|FullyQualifiedName~KernelRecovery"
@@ -896,7 +898,7 @@ dotnet test tests/Wolpertinger.Integration.Tests/Wolpertinger.Integration.Tests.
 
 Every bug fix must first reproduce as one failing test and then make that exact test pass. Do not add speculative recovery branches.
 
-- [ ] **Step 7: Commit failure/recovery coverage**
+- [x] **Step 7: Commit failure/recovery coverage**
 
 ```powershell
 git add tests/Wolpertinger.Integration.Tests src kernel
@@ -915,7 +917,7 @@ git commit -m "test: verify fail-closed recovery semantics"
 **Interfaces:**
 - Documents exactly what exists after this plan; no future feature is described as implemented.
 - CI executes the same .NET tests, Ada runtime tests, SPARK proof, and full integration path required locally.
-- [ ] **Step 1: Update public docs to match the architecture that now exists**
+- [x] **Step 1: Update public docs to match the architecture that now exists**
 
 Change README foundation language to: `.NET 10 Edge/Core Host + narrow Ada/SPARK Trusted Kernel`. Keep the project-status wording factual. Update ROADMAP so FuE/foundation freeze are complete and the first FSDJump vertical slice is marked implemented only after all acceptance tests pass.
 
@@ -923,7 +925,7 @@ Create `docs/architecture/vertical-slice-v0.md` with the concrete process/data f
 
 Update `NOTICE.md` from its research-phase placeholder to the actual runtime dependency inventory: `System.Formats.Cbor 10.0.11` (MIT), `Microsoft.Data.Sqlite 10.0.11` (MIT), and `cbor_ada 0.3.0` at commit `b448c366117ff9f6c050b13d4fe609bb79495759` (Apache-2.0). State that each dependency retains its own licence; do not imply those components are relicensed under EUPL.
 
-- [ ] **Step 2: Add one Windows CI job matching the supported development target**
+- [x] **Step 2: Add one Windows CI job matching the supported development target**
 
 Use:
 
@@ -940,7 +942,7 @@ Use:
 
 Then non-interactively select `gnat_native=16.1.0` and `gprbuild=26.0.1`, build the kernel with the validation profile, run Ada tests/proofs, build .NET Release, and run all .NET tests including real-kernel integration tests.
 
-- [ ] **Step 3: Run the complete local acceptance gate from a clean build**
+- [x] **Step 3: Run the complete local acceptance gate from a clean build**
 
 ```powershell
 dotnet clean WOLPERTINGER.slnx -c Release
@@ -949,12 +951,12 @@ dotnet build WOLPERTINGER.slnx -c Release
 dotnet test WOLPERTINGER.slnx -c Release
 Push-Location kernel; alr build --validation; Pop-Location
 Push-Location kernel/tests; alr build --validation; alr run; Pop-Location
-Push-Location kernel/proof; alr gnatprove -- -P wolpertinger_kernel_proof.gpr --level=2 --report=all; Pop-Location
+Push-Location kernel/proof; alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all; Pop-Location
 ```
-- [ ] **Step 4: Run the actual host once in ingest and replay mode**
+- [x] **Step 4: Run the actual host once in ingest and replay mode**
 
 ```powershell
-$kernel = (Resolve-Path 'kernel\bin\wolpertinger_kernel.exe').Path
+$kernel = (Resolve-Path 'kernel\bin\wolpertinger_kernel_main.exe').Path
 $data = Join-Path $env:TEMP 'wolpertinger-v0-acceptance'
 Remove-Item -Recurse -Force $data -ErrorAction SilentlyContinue
 dotnet run --project src/Wolpertinger.Host -c Release -- ingest --journal fixtures/journal/live-v4-fsdjump-session.jsonl --data $data --kernel $kernel
@@ -963,7 +965,7 @@ dotnet run --project src/Wolpertinger.Host -c Release -- replay --data $data --k
 
 Expected: both commands succeed; each run emits the same one deterministic jump-output text, and replay reports the same final state digest as the ingest run.
 
-- [ ] **Step 5: Run repository hygiene checks**
+- [x] **Step 5: Run repository hygiene checks**
 
 ```powershell
 git diff --check
@@ -973,14 +975,14 @@ git grep -nEI '(api[_-]?key|client[_-]?secret|password|bearer[[:space:]]+[A-Za-z
 
 Expected: no whitespace errors, only intended tracked changes before the documentation commit, and no credential-like material.
 
-- [ ] **Step 6: Commit docs/CI and run the final gate again**
+- [x] **Step 6: Commit docs/CI and run the final gate again**
 
 ```powershell
 git add README.md ROADMAP.md NOTICE.md .github/workflows/ci.yml docs/architecture/vertical-slice-v0.md
 git commit -m "docs: document first vertical slice"
 dotnet test WOLPERTINGER.slnx -c Release
 Push-Location kernel/tests; alr run; Pop-Location
-Push-Location kernel/proof; alr gnatprove -- -P wolpertinger_kernel_proof.gpr --level=2 --report=all; Pop-Location
+Push-Location kernel/proof; alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all; Pop-Location
 git status --short
 ```
 

@@ -2,6 +2,11 @@ with Ada.Text_IO;
 with AUnit.Assertions;
 with Interfaces;
 with System.Storage_Elements;
+with Test_Engine;
+with Test_Framing;
+with Test_Control;
+with Test_State_Digest;
+with Test_Kernel_Messages;
 with Wolpertinger_Protocol;
 with Wolpertinger_Types;
 
@@ -144,5 +149,10 @@ begin
    Test_Session_Bound;
    Test_FSD_Jump;
    Test_Oversize_Rejected_Before_Parse;
-   TIO.Put_Line ("PASS: protocol golden vectors");
+   Test_Engine;
+   Test_Framing;
+   Test_Control;
+   Test_State_Digest;
+   Test_Kernel_Messages;
+   TIO.Put_Line ("PASS: protocol + engine + framing + digest + control tests");
 end Wolpertinger_Kernel_Tests;
