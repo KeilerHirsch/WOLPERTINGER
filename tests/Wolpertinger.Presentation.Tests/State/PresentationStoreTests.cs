@@ -10,6 +10,7 @@ public sealed class PresentationStoreTests
     public void HigherRevisionReplacesCurrentAndRaisesOneEvent()
     {
         var store = new PresentationStore();
+        Assert.True(store.ApplySnapshot(TestSnapshots.Jump(2)));
         var changes = 0;
         store.StateChanged += (_, _) => changes++;
 
@@ -48,6 +49,7 @@ public sealed class PresentationStoreTests
 
         Assert.Throws<InvalidDataException>(() => store.ApplySnapshot(conflicting));
         Assert.Equal(snapshot, store.State.Snapshot);
+        Assert.Equal(PresentationConnectionState.Incompatible, store.State.Connection);
     }
 
     [Fact]
@@ -86,7 +88,7 @@ public sealed class PresentationStoreTests
     }
 
     [Fact]
-    public void InvalidSnapshotNeverReplacesLastValidSnapshot()
+    public void InvalidSnapshotRetainsLastValidSnapshotButBecomesIncompatible()
     {
         var store = new PresentationStore();
         var valid = TestSnapshots.Jump(3);
@@ -95,7 +97,20 @@ public sealed class PresentationStoreTests
 
         Assert.Throws<InvalidDataException>(() => store.ApplySnapshot(invalid));
         Assert.Equal(valid, store.State.Snapshot);
-        Assert.Equal(PresentationConnectionState.Live, store.State.Connection);
+        Assert.Equal(PresentationConnectionState.Incompatible, store.State.Connection);
+    }
+
+    [Fact]
+    public void InvalidLowerRevisionIsValidatedBeforeRevisionComparison()
+    {
+        var store = new PresentationStore();
+        var valid = TestSnapshots.Jump(3);
+        Assert.True(store.ApplySnapshot(valid));
+        var invalidOlder = TestSnapshots.Jump(2) with { ProtocolVersion = 99 };
+
+        Assert.Throws<InvalidDataException>(() => store.ApplySnapshot(invalidOlder));
+        Assert.Equal(valid, store.State.Snapshot);
+        Assert.Equal(PresentationConnectionState.Incompatible, store.State.Connection);
     }
 }
 

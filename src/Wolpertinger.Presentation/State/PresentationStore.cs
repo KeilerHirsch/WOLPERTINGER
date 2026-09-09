@@ -15,7 +15,15 @@ public sealed class PresentationStore
 
     public bool ApplySnapshot(PresentationSnapshot snapshot)
     {
-        PresentationSnapshotValidator.Validate(snapshot);
+        try
+        {
+            PresentationSnapshotValidator.Validate(snapshot);
+        }
+        catch (InvalidDataException)
+        {
+            MarkIncompatible();
+            throw;
+        }
 
         var current = State.Snapshot;
         if (current is not null)
@@ -26,7 +34,10 @@ public sealed class PresentationStore
             if (snapshot.Revision == current.Revision)
             {
                 if (snapshot != current)
+                {
+                    MarkIncompatible();
                     throw new InvalidDataException("Conflicting presentation snapshot at the current revision.");
+                }
 
                 if (State.Connection == PresentationConnectionState.Live)
                     return false;
