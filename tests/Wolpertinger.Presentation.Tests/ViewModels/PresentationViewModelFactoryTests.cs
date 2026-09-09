@@ -55,7 +55,23 @@ public sealed class PresentationViewModelFactoryTests
         Assert.Equal("W. Grantler NX-42", vm.StarSystem);
         Assert.Equal("42.125 ly", vm.JumpDistanceText);
         Assert.False(vm.IsLive);
-        Assert.Equal("Disconnected - last known data", vm.AvailabilityText);
+        Assert.Equal("Disconnected — last known data", vm.AvailabilityText);
+    }
+
+    [Fact]
+    public void InvalidSnapshotMakesRetainedCommanderContextExplicitlyNonLive()
+    {
+        var store = new PresentationStore();
+        var valid = CreateSnapshot(7);
+        Assert.True(store.ApplySnapshot(valid));
+        var invalid = CreateSnapshot(8) with { ProtocolVersion = 99 };
+
+        Assert.Throws<InvalidDataException>(() => store.ApplySnapshot(invalid));
+        var vm = PresentationViewModelFactory.CreateJump(store.State, DensityPreset.Standard);
+
+        Assert.Equal(valid.Jump!.StarSystem, vm.StarSystem);
+        Assert.False(vm.IsLive);
+        Assert.Equal("Incompatible — last known data", vm.AvailabilityText);
     }
 
     [Fact]

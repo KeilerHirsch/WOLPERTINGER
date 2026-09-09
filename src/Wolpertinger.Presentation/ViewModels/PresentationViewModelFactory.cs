@@ -84,8 +84,8 @@ public static class PresentationViewModelFactory
     {
         PresentationConnectionState.Connecting => "Connecting",
         PresentationConnectionState.Live => "Live",
-        PresentationConnectionState.Disconnected => "Disconnected - last known data",
-        PresentationConnectionState.Incompatible => "Incompatible - last known data",
+        PresentationConnectionState.Disconnected => "Disconnected — last known data",
+        PresentationConnectionState.Incompatible => "Incompatible — last known data",
         _ => throw new InvalidDataException("Undefined presentation connection state.")
     };
 
