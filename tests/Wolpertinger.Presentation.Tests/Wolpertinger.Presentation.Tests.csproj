@@ -11,6 +11,8 @@
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />
+    <ProjectReference Include="../../src/Wolpertinger.Edge/Wolpertinger.Edge.csproj" />
+    <ProjectReference Include="../../src/Wolpertinger.Presentation/Wolpertinger.Presentation.csproj" />
     <ProjectReference Include="../../src/Wolpertinger.Presentation.Contracts/Wolpertinger.Presentation.Contracts.csproj" />
   </ItemGroup>
 </Project>
