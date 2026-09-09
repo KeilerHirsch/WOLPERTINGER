@@ -57,6 +57,45 @@ public sealed class PresentationPipeServerTests
         }
     }
 
+    [Fact]
+    public async Task EarlyAbortBeforeAcceptDoesNotStopServer()
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var name = $"wolpertinger.presentation.early-abort.{Guid.NewGuid():N}";
+        var publisher = new PresentationStatePublisher();
+        await publisher.PublishJumpAsync(TestFacts.Jump(), new ContextDecision(true, "JumpCompleted", OutputChannel.Display));
+        var factoryCalls = 0;
+
+        NamedPipeServerStream CreatePipe()
+        {
+            var pipe = new NamedPipeServerStream(name, PipeDirection.InOut, 1,
+                PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
+            if (Interlocked.Increment(ref factoryCalls) == 1)
+            {
+                using var abort = new NamedPipeClientStream(".", name, PipeDirection.InOut, PipeOptions.Asynchronous);
+                abort.Connect(2_000);
+            }
+            return pipe;
+        }
+
+        var server = new PresentationPipeServer(publisher, name, CreatePipe);
+        var running = server.RunAsync(timeout.Token);
+        try
+        {
+            await Task.Yield();
+            Assert.False(running.IsFaulted, running.Exception?.GetBaseException().ToString());
+            await using var reconnect = new NamedPipeClientStream(".", name, PipeDirection.InOut, PipeOptions.Asynchronous);
+            await reconnect.ConnectAsync(timeout.Token);
+            Assert.Equal(publisher.Current, await PresentationFrameCodec.ReadAsync(reconnect, timeout.Token));
+            Assert.True(factoryCalls >= 2);
+        }
+        finally
+        {
+            timeout.Cancel();
+            try { await running; }
+            catch (OperationCanceledException) when (timeout.IsCancellationRequested) { }
+        }
+    }
     private static async Task WaitUntilAsync(Func<bool> condition, CancellationToken ct)
     {
         while (!condition()) await Task.Delay(10, ct);

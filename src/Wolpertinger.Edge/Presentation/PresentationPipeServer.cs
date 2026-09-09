@@ -5,18 +5,32 @@ namespace Wolpertinger.Edge.Presentation;
 
 public sealed class PresentationPipeServer(IPresentationPublisher publisher, string pipeName = PresentationProtocol.DefaultPipeName)
 {
+    private readonly Func<NamedPipeServerStream>? _pipeFactory;
     private int _connectedClientCount;
     private ulong _lastSentRevision;
     public int ConnectedClientCount => Volatile.Read(ref _connectedClientCount);
     public ulong LastSentRevision => Volatile.Read(ref _lastSentRevision);
 
+    internal PresentationPipeServer(IPresentationPublisher publisher, string pipeName, Func<NamedPipeServerStream> pipeFactory)
+        : this(publisher, pipeName)
+    {
+        _pipeFactory = pipeFactory ?? throw new ArgumentNullException(nameof(pipeFactory));
+    }
+
     public async Task RunAsync(CancellationToken ct = default)
     {
         while (!ct.IsCancellationRequested)
         {
-            await using var pipe = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1,
+            await using var pipe = _pipeFactory?.Invoke() ?? new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1,
                 PipeTransmissionMode.Byte, PipeOptions.Asynchronous | PipeOptions.CurrentUserOnly);
-            await pipe.WaitForConnectionAsync(ct);
+            try
+            {
+                await pipe.WaitForConnectionAsync(ct);
+            }
+            catch (IOException) when (!ct.IsCancellationRequested)
+            {
+                continue;
+            }
             using var session = CancellationTokenSource.CreateLinkedTokenSource(ct);
             Volatile.Write(ref _connectedClientCount, 1);
             var monitor = MonitorClientDisconnectAsync(pipe, session);
