@@ -6,4 +6,7 @@
     <PackageReference Include="System.Formats.Cbor" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Wolpertinger.Presentation.Contracts\Wolpertinger.Presentation.Contracts.csproj" />
+  </ItemGroup>
 </Project>
