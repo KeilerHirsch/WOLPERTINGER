@@ -1,9 +1,12 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Wolpertinger.Presentation/Wolpertinger.Presentation.csproj" />
+    <Project Path="src/Wolpertinger.Presentation.Contracts/Wolpertinger.Presentation.Contracts.csproj" />
     <Project Path="src/Wolpertinger.Edge/Wolpertinger.Edge.csproj" />
     <Project Path="src/Wolpertinger.Host/Wolpertinger.Host.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Wolpertinger.Presentation.Tests/Wolpertinger.Presentation.Tests.csproj" />
     <Project Path="tests/Wolpertinger.Edge.Tests/Wolpertinger.Edge.Tests.csproj" />
     <Project Path="tests/Wolpertinger.Integration.Tests/Wolpertinger.Integration.Tests.csproj" />
   </Folder>

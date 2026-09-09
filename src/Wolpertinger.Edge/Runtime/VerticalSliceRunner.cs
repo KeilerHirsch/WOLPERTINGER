@@ -8,6 +8,7 @@ using Wolpertinger.Edge.Kernel;
 using Wolpertinger.Edge.Output;
 using Wolpertinger.Edge.Persistence;
 using Wolpertinger.Edge.Projections;
+using Wolpertinger.Edge.Presentation;
 
 namespace Wolpertinger.Edge.Runtime;
 
@@ -17,6 +18,7 @@ public sealed class VerticalSliceRunner : IAsyncDisposable
     private readonly NormalizedObservationLedger _ledger;
     private readonly KernelSupervisor _supervisor;
     private readonly ProjectionStore _projections;
+    private readonly IPresentationPublisher _presentationPublisher;
     private readonly SessionIdentityTracker _identity = new();
     private readonly ContextDecisionEngine _context = new();
     private readonly CopilotOutputFormatter _formatter = new();
@@ -24,8 +26,9 @@ public sealed class VerticalSliceRunner : IAsyncDisposable
     private readonly List<DiagnosticEvent> _diagnostics = [];
 
     private VerticalSliceRunner(SegmentedEvidenceLog evidence, NormalizedObservationLedger ledger,
-        KernelSupervisor supervisor, ProjectionStore projections)
-        => (_evidence, _ledger, _supervisor, _projections) = (evidence, ledger, supervisor, projections);
+        KernelSupervisor supervisor, ProjectionStore projections, IPresentationPublisher presentationPublisher)
+        => (_evidence, _ledger, _supervisor, _projections, _presentationPublisher) =
+            (evidence, ledger, supervisor, projections, presentationPublisher);
 
     public IReadOnlyList<CopilotOutput> Outputs => _outputs;
     public IReadOnlyList<DiagnosticEvent> Diagnostics => _diagnostics;
@@ -33,7 +36,7 @@ public sealed class VerticalSliceRunner : IAsyncDisposable
     public KernelSupervisorDiagnostics KernelDiagnostics => _supervisor.Diagnostics;
 
     public static async Task<VerticalSliceRunner> OpenAsync(string dataDirectory, string kernelExecutable,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, IPresentationPublisher? presentationPublisher = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(dataDirectory); ArgumentException.ThrowIfNullOrWhiteSpace(kernelExecutable);
         Directory.CreateDirectory(dataDirectory);
@@ -43,7 +46,8 @@ public sealed class VerticalSliceRunner : IAsyncDisposable
         var supervisor = KernelSupervisor.Create(new KernelProcessOptions(kernelExecutable, TimeSpan.FromSeconds(5)), epochs, ledger);
         await supervisor.StartAsync(cancellationToken);
         var projections = await ProjectionStore.OpenAsync(Path.Combine(dataDirectory, "projections.db"), cancellationToken);
-        var runner = new VerticalSliceRunner(evidence, ledger, supervisor, projections);
+        var runner = new VerticalSliceRunner(evidence, ledger, supervisor, projections,
+            presentationPublisher ?? NullPresentationPublisher.Instance);
         await runner.RestoreIdentityFromLedgerAsync(cancellationToken);
         return runner;
     }
@@ -95,6 +99,14 @@ public sealed class VerticalSliceRunner : IAsyncDisposable
         var fact = JumpFactFactory.Create(observation, reference, result);
         var decision = _context.Decide(fact);
         if (!decision.Surface) return;
+        try
+        {
+            await _presentationPublisher.PublishJumpAsync(fact, decision, ct);
+        }
+        catch (Exception ex)
+        {
+            _diagnostics.Add(new DiagnosticEvent("PresentationPublishFailed", reference.RawOrdinal, ex.Message));
+        }
         var output = _formatter.Format(fact, decision);
         await _projections.ApplyAsync(output, ct);
         _outputs.Add(output);
