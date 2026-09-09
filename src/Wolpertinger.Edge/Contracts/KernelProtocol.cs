@@ -20,3 +20,45 @@ public enum SourceProvenance : byte
     Community = 4,
     UserEntered = 5,
 }
+
+public enum KernelResponseKind : byte { Role = 1, Apply = 2 }
+public enum KernelResponseStatus : byte
+{
+    Ok = 0,
+    Idempotent = 1,
+    SequenceGap = 2,
+    IntegrityFault = 3,
+    IdentityConflict = 4,
+    InvalidMessage = 5,
+    StaleEpoch = 6,
+}
+
+public enum FreshnessState : byte
+{
+    Unknown = 0,
+    Current = 1,
+    Stale = 2,
+    Conflicting = 3,
+}
+
+public sealed record KernelJumpFact(
+    ObservationCursor Cursor,
+    ulong SystemAddress,
+    string StarSystem,
+    GalacticPosition Position,
+    Decimal64 JumpDistance,
+    Decimal64 FuelUsed,
+    Decimal64 FuelLevel,
+    SourceProvenance LocationProvenance,
+    FreshnessState LocationFreshness,
+    SourceProvenance FuelProvenance,
+    FreshnessState FuelFreshness);
+
+public sealed record KernelResponse(
+    KernelResponseKind Kind,
+    KernelResponseStatus Status,
+    ulong Epoch,
+    KernelRole Role,
+    ObservationCursor? Cursor,
+    FixedBytes32 StateDigest,
+    KernelJumpFact? JumpFact);
