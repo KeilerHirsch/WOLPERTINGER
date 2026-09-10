@@ -1,0 +1,22 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Wolpertinger.Presentation.App.App">
+  <Application.Styles>
+    <FluentTheme />
+  </Application.Styles>
+  <TrayIcon.Icons>
+    <TrayIcons>
+      <TrayIcon Icon="/Assets/wolpertinger.ico" ToolTipText="WOLPERTINGER">
+        <TrayIcon.Menu>
+          <NativeMenu>
+            <NativeMenuItem Header="Show overlay" Click="OnToggleOverlay" />
+            <NativeMenuItem Header="Fullscreen hub" Click="OnShowHub" />
+            <NativeMenuItem Header="Diagnostics" Click="OnShowDiagnostics" />
+            <NativeMenuItemSeparator />
+            <NativeMenuItem Header="Exit presentation" Click="OnExitPresentation" />
+          </NativeMenu>
+        </TrayIcon.Menu>
+      </TrayIcon>
+    </TrayIcons>
+  </TrayIcon.Icons>
+</Application>

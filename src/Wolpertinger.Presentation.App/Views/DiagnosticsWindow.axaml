@@ -1,0 +1,33 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:Wolpertinger.Presentation.ViewModels"
+        x:Class="Wolpertinger.Presentation.App.Views.DiagnosticsWindow"
+        x:DataType="vm:DiagnosticsViewModel" Title="WOLPERTINGER Diagnostics"
+        Width="800" Height="680" CanResize="True">
+  <ScrollViewer Margin="24">
+    <StackPanel Spacing="12">
+      <TextBlock Text="Diagnostics — read-only" FontSize="24" />
+      <TextBlock x:Name="SurfaceStatus" TextWrapping="Wrap" />
+      <TextBlock x:Name="EmptyState" Text="Connecting — no validated jump available" TextWrapping="Wrap" />
+      <StackPanel x:Name="Body" IsVisible="False" Spacing="8">
+        <SelectableTextBlock Text="{Binding Connection, StringFormat='Connection: {0}'}" />
+        <SelectableTextBlock Text="{Binding ProtocolVersion, StringFormat='Protocol version: {0}'}" />
+        <SelectableTextBlock Text="{Binding Revision, StringFormat='Revision: {0}'}" />
+        <SelectableTextBlock Text="{Binding Cursor, StringFormat='Cursor: {0}'}" TextWrapping="Wrap" />
+        <TextBlock Text="Profile" FontWeight="Bold" />
+        <SelectableTextBlock Text="{Binding Fid, StringFormat='FID: {0}'}" />
+        <SelectableTextBlock Text="{Binding RealmText, StringFormat='Realm: {0}'}" />
+        <SelectableTextBlock Text="{Binding SaveEpoch, StringFormat='Save epoch: {0}'}" />
+        <TextBlock Text="Evidence" FontWeight="Bold" />
+        <SelectableTextBlock Text="{Binding EvidenceReference}" TextWrapping="Wrap" />
+        <SelectableTextBlock Text="{Binding EvidenceDigestHex, StringFormat='Evidence digest: {0}'}" TextWrapping="Wrap" />
+        <SelectableTextBlock Text="{Binding StateDigestHex, StringFormat='State digest: {0}'}" TextWrapping="Wrap" />
+        <TextBlock Text="Source and freshness" FontWeight="Bold" />
+        <SelectableTextBlock Text="{Binding LocationProvenanceText, StringFormat='Location source: {0}'}" />
+        <SelectableTextBlock Text="{Binding LocationFreshnessText, StringFormat='Location freshness: {0}'}" />
+        <SelectableTextBlock Text="{Binding FuelProvenanceText, StringFormat='Fuel source: {0}'}" />
+        <SelectableTextBlock Text="{Binding FuelFreshnessText, StringFormat='Fuel freshness: {0}'}" />
+      </StackPanel>
+    </StackPanel>
+  </ScrollViewer>
+</Window>

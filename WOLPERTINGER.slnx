@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/Wolpertinger.Presentation.App/Wolpertinger.Presentation.App.csproj" />
     <Project Path="src/Wolpertinger.Presentation/Wolpertinger.Presentation.csproj" />
     <Project Path="src/Wolpertinger.Presentation.Windows/Wolpertinger.Presentation.Windows.csproj" />
     <Project Path="src/Wolpertinger.Presentation.Contracts/Wolpertinger.Presentation.Contracts.csproj" />

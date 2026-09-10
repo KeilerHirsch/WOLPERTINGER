@@ -129,6 +129,22 @@ public sealed class WindowsAdapterTests
     }
 
     [Fact]
+    public void ManualRecoveryRetriesAfterTransientNativeFailure()
+    {
+        var surface = new FakeSurface();
+        var native = new FakeNative { Fail = true };
+        using var attachment = Attach(surface, native);
+        surface.Open();
+        Assert.NotNull(attachment.LastDiagnostic);
+        Assert.True(surface.Hidden);
+
+        native.Fail = false;
+        Assert.True(attachment.TryRecover());
+        Assert.Null(attachment.LastDiagnostic);
+        Assert.Equal("secondary", attachment.CurrentDisplayKey);
+    }
+
+    [Fact]
     public void ClosedAndDisposedAttachmentsStopRespondingToEvents()
     {
         var surface = new FakeSurface();
@@ -175,7 +191,7 @@ public sealed class WindowsAdapterTests
         public List<string> Calls { get; } = [];
         public List<(nint After, PixelRect Bounds, uint Flags)> Positions { get; } = [];
         public nint Style { get; private set; } = 0x00040000;
-        public bool Fail { get; init; }
+        public bool Fail { get; set; }
         public nint ReadExtendedStyle(nint handle) { Calls.Add("read"); return Style; }
         public void WriteExtendedStyle(nint handle, nint style) { Calls.Add("style"); Style = style; }
         public void Position(nint handle, nint after, PixelRect bounds, uint flags)
