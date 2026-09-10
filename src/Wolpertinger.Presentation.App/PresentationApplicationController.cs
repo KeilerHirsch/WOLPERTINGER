@@ -64,7 +64,7 @@ public sealed class PresentationApplicationController : IDisposable
             return;
         if (overlay!.IsVisible)
             overlay.Hide();
-        else if (overlay.Attachment.LastDiagnostic is null)
+        else if (overlay.Attachment.LastDiagnostic is null || overlay.Attachment.TryRecover())
             overlay.Show();
         preferences = preferences with { OverlayVisible = overlay.IsVisible };
         RefreshSurfaceDiagnostics();
@@ -77,7 +77,7 @@ public sealed class PresentationApplicationController : IDisposable
         if (exiting || disposed)
             return;
         // A hidden failed adapter stays closed until a topology refresh clears its diagnostic.
-        if (hub!.Attachment.LastDiagnostic is null)
+        if (hub!.Attachment.LastDiagnostic is null || hub.Attachment.TryRecover())
             hub.Show();
         if (hub.IsVisible)
             hub.Activate();

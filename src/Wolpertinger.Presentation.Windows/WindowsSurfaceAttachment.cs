@@ -87,6 +87,14 @@ public sealed class WindowsSurfaceAttachment : IDisposable
         }
     }
 
+    public bool TryRecover()
+    {
+        if (disposed)
+            return false;
+        Refresh();
+        return LastDiagnostic is null;
+    }
+
     public void Dispose()
     {
         if (disposed)
