@@ -10,3 +10,4 @@ Work only from what is already in this repository or in the current task/request
 4. Keep documentation and code comments focused on what each change does; do not add surrounding private context.
 5. If a task would require information that is not in this repository or that was shared privately, ask the owner.
 6. Commits, PR titles and PR descriptions should be concise and factual about what changed.
+7. Do not publish internal implementation plans, private research notes, prompt transcripts, threat-model working papers or decision rationale that does not belong to the public product surface. Public documentation should describe the maintained system, not the private process that produced it.
