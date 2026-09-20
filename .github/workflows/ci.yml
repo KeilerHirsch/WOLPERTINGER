@@ -2,14 +2,25 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   windows-foundation:
-    runs-on: windows-latest
+    runs-on: windows-2025
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           dotnet-version: 10.0.111
@@ -37,7 +48,7 @@ jobs:
         shell: pwsh
         run: |
           Push-Location kernel/proof
-          alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all
+          alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all --checks-as-errors=on
           Pop-Location
 
       - name: .NET build and tests
@@ -47,3 +58,4 @@ jobs:
           dotnet build WOLPERTINGER.slnx -c Release --no-restore
           dotnet test WOLPERTINGER.slnx -c Release --no-build
           git diff --check
+          git diff --exit-code
