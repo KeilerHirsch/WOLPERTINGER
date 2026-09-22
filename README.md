@@ -1,139 +1,44 @@
 # WOLPERTINGER
 
-**Wide-Area Operations & Logistics Platform for Exploration, Routing, Telemetry, Intelligence, Navigation, Guidance, Engineering, and Reconnaissance**
+**Your copilot should know what to do.**
 
-*Your copilot should know what to do.*
+WOLPERTINGER is a local-first companion for **Elite Dangerous** that brings the right information forward for what you are doing now — without making an external AI provider the owner of your game state.
 
-**High-assurance inside. KISS outside.**
-
-WOLPERTINGER is an open-source, local-first companion platform for **Elite Dangerous**. One authoritative core turns game context into useful facts and presents them through the surface that fits the moment.
-
-> **Status: Pre-alpha.** The trusted Stage-1 foundation is complete; presentation work is in progress. There is **no supported end-user release yet**.
+**Pre-alpha** · no supported end-user release yet.
 
 <p align="center">
   <img src="docs/assets/wolpertinger-concept-ui.webp" alt="WOLPERTINGER concept UI showing route, exploration, engineering, and shipboard-assistant context in an Elite Dangerous cockpit" width="100%">
 </p>
 
-<p align="center"><sub><strong>Concept UI — early development.</strong> Product direction, not an implemented-feature screenshot.</sub></p>
+<p align="center"><sub><strong>Concept UI.</strong> Product direction, not an implemented-feature screenshot.</sub></p>
 
-## In 30 seconds
+## What it does
 
-WOLPERTINGER is designed around three rules:
+- **Explore** without digging through panel after panel.
+- **Route** with context that follows the current task.
+- **Engineer** with the information that matters now.
+- **Stay local** for authoritative game context; optional providers add capability, not ownership.
 
-- **Useful before configured.** Local Journal/Status data should provide value without provider accounts or API keys.
-- **Context instead of panel archaeology.** Relevant information should come forward with the commander's current task.
-- **One core, multiple surfaces.** Tray, overlays, hub, diagnostics and later passive voice consume the same authoritative facts.
+## Today
 
-The commander should not be the integration bus. Optional providers and future assistant layers may add capability, but they must not become the owner of local game truth.
+The trusted foundation is working. The commander-facing tray, overlay and hub experience is still in development.
 
-## What exists today
+One authoritative fact stream is designed to feed every surface, so the commander does not become the integration bus.
 
-Implemented on `main`:
+## Under the hood
 
-- durable raw evidence and a normalized observation ledger;
-- deterministic replay and rebuildable projections;
-- bounded CBOR/CDDL trusted contract;
-- Ada/SPARK Active + hot-passive Shadow kernels;
-- authority epoch/fencing and canonical state digest;
-- retained `FSDJump → JumpFact → deterministic output` vertical slice;
-- typed presentation contracts and validation;
-- trusted fact projection into presentation snapshots;
-- bounded latest-state publishing and local named-pipe transport;
-- presentation state/ViewModels plus Windows-facing overlay/hub infrastructure.
+- Deterministic local game-state processing.
+- A small isolated trusted core for critical boundaries.
+- Tests, replay and proof-backed gates for important claims.
 
-Still in active development: the commander-facing tray/overlay/hub experience, reconnect/recovery UX, passive voice/TTS, optional providers and broader Elite domain workflows.
+**High-assurance inside. KISS outside.**
 
-## Architecture
-
-```text
-Elite Journal / Status / future optional sources
-        |
-        v
-.NET 10 Edge Host
-  durable evidence -> deterministic normalization -> normalized ledger
-        |
-        v
-bounded, versioned CBOR/CDDL contract
-        |
-        v
-Ada/SPARK Trusted Kernel x2
-  Active + hot-passive Shadow
-  authoritative state + deterministic facts
-        |
-        v
-.NET context / presentation projection
-        |
-        +--> Tray / Overlay / Docks
-        +--> Fullscreen Hub
-        +--> Diagnostics
-        +--> later passive Voice/TTS
-```
-
-The trusted path is intentionally isolated from UI, external services, plugins, TTS/STT and LLMs. Presentation consumes trusted facts; it does not manufacture them.
-
-## Verify it locally
-
-WOLPERTINGER is currently aimed at contributors and architecture review.
-
-Requirements:
-
-- .NET SDK **10.0.111**
-- Alire **2.1.1**
-- GNAT **16.1.0**
-- GPRbuild **26.0.1**
-
-Build and test the .NET side:
-
-```powershell
-dotnet restore WOLPERTINGER.slnx
-dotnet build WOLPERTINGER.slnx -c Release --no-restore
-dotnet test WOLPERTINGER.slnx -c Release --no-build
-```
-
-Build and test the trusted kernel:
-
-```powershell
-Push-Location kernel
-alr build --validation
-Pop-Location
-
-Push-Location kernel/tests
-alr build --validation
-alr run
-Pop-Location
-```
-
-Run the SPARK proof boundary:
-
-```powershell
-Push-Location kernel/proof
-alr exec -- gnatprove -P wolpertinger_kernel_proof.gpr --level=2 --report=all
-Pop-Location
-```
-
-The same gate runs in GitHub Actions on pushes and pull requests.
-
-## Engineering rules
-
-- **Evidence before claims.** Replay, tests and proof artifacts back important statements.
-- **Deterministic where it matters.** Same ordered evidence should reproduce the same authoritative result.
-- **Fail visibly.** Optional failures degrade; uncertainty and stale data remain labelled.
-- **KISS outside. Assurance inside.** Complexity belongs behind the user-facing surface.
-
-AI-assisted tools may be used during research, review, documentation and implementation. They are development aids, not runtime authorities.
-
-## Roadmap
-
-See [ROADMAP.md](ROADMAP.md) for the current high-level sequence. Directions are not release promises.
+**Public docs:** [Roadmap](ROADMAP.md) · [Licence](LICENSE) · [Notices](NOTICE.md)
 
 ## Support
 
-Funding is voluntary and gives no feature, ranking, review, release, roadmap, support or technical-influence privileges.
+Funding is voluntary and creates no feature, ranking, roadmap, review, release or technical-influence entitlement.
 
 ## Licence
 
-WOLPERTINGER-owned code is licensed under the **European Union Public Licence 1.2 (EUPL-1.2)**. Third-party dependencies and assets retain their own licences and notices; see [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).
-
----
-
-**High-assurance inside. KISS outside. Slightly unhinged by design.** 🦌
+WOLPERTINGER-owned code is licensed under the **European Union Public Licence 1.2 (EUPL-1.2)**. Third-party dependencies and assets retain their own licences and notices.
