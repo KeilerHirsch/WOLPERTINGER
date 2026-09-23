@@ -17,3 +17,6 @@ or dependencies; each external source retains its own provenance and licence.
 - `cbor_ada` 0.3.0 (pinned) — Apache-2.0.
 - `System.Formats.Cbor` 10.0.11 — MIT.
 - `Microsoft.Data.Sqlite` 10.0.11 — MIT.
+- `Avalonia` 12.1.0 — MIT.
+- `Avalonia.Desktop` 12.1.0 — MIT.
+- `Avalonia.Themes.Fluent` 12.1.0 — MIT.
