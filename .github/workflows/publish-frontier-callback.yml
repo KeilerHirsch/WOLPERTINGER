@@ -2,6 +2,12 @@ name: Publish Frontier callback page
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - site/**
+      - .github/workflows/publish-frontier-callback.yml
 
 permissions:
   contents: read
