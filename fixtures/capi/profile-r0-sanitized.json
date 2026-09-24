@@ -1,0 +1,1318 @@
+{
+  "commander": {
+    "id": 0,
+    "name": "REDACTED",
+    "credits": 0,
+    "debt": 0,
+    "currentShipId": 0,
+    "alive": false,
+    "docked": false,
+    "onfoot": false,
+    "rank": {
+      "combat": 0,
+      "trade": 0,
+      "explore": 0,
+      "crime": 0,
+      "service": 0,
+      "REDACTED_FIELD_KEY_1": 0,
+      "federation": 0,
+      "power": 0,
+      "cqc": 0,
+      "soldier": 0,
+      "exobiologist": 0,
+      "builder": 0,
+      "learner": 0
+    },
+    "capabilities": {
+      "AllowCobraMkIV": false,
+      "Horizons": false,
+      "Odyssey": false
+    },
+    "mercCoins": 0
+  },
+  "ship": {
+    "id": 0,
+    "name": "REDACTED",
+    "value": {
+      "hull": 0,
+      "modules": 0,
+      "cargo": 0,
+      "total": 0,
+      "unloaned": 0
+    },
+    "free": false,
+    "shipName": "REDACTED",
+    "shipID": "REDACTED",
+    "station": {
+      "id": 0,
+      "name": "REDACTED"
+    },
+    "starsystem": {
+      "id": 0,
+      "name": "REDACTED",
+      "systemaddress": 0
+    },
+    "alive": false,
+    "health": {
+      "hull": 0,
+      "shield": 0,
+      "shieldup": false,
+      "REDACTED_FIELD_KEY_1": 0,
+      "paintwork": 0
+    },
+    "cockpitBreached": false,
+    "oxygenRemaining": 0,
+    "modules": {
+      "HugeHardpoint1": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "HugeHardpoint2": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "LargeHardpoint1": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "MediumHardpoint1": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "MediumHardpoint2": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "SmallHardpoint1": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "SmallHardpoint2": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "TinyHardpoint1": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "TinyHardpoint2": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "TinyHardpoint3": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "TinyHardpoint4": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": []
+      },
+      "TinyHardpoint5": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "TinyHardpoint6": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "TinyHardpoint7": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "TinyHardpoint8": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Armour": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "PaintJob": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "PowerPlant": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "MainEngines": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "FrameShiftDrive": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": []
+      },
+      "LifeSupport": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "PowerDistributor": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": []
+      },
+      "Radar": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": []
+      },
+      "FuelTank": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Slot01_Size7": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "Slot02_Size7": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Slot03_Size7": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Slot04_Size6": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Slot05_Size6": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Slot06_Size5": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "Slot07_Size5": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Slot08_Size4": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Slot09_Size4": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Slot10_Size3": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Slot11_Size1": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Military01": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Military02": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        },
+        "engineer": {
+          "engineerName": "REDACTED",
+          "engineerId": 0,
+          "recipeName": "REDACTED",
+          "recipeLocName": "REDACTED",
+          "recipeLocDescription": "REDACTED",
+          "recipeLevel": 0
+        },
+        "WorkInProgress_modifications": {
+          "REDACTED_KEY": {
+            "value": 0.0,
+            "LessIsGood": false,
+            "locName": "REDACTED",
+            "displayValue": "REDACTED",
+            "dir": "REDACTED"
+          }
+        },
+        "specialModifications": {
+          "REDACTED_KEY": "REDACTED"
+        }
+      },
+      "Decal1": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Decal2": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Decal3": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "PlanetaryApproachSuite": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "Bobble08": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "WeaponColour": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      },
+      "VesselVoice": {
+        "module": {
+          "id": 0,
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "locDescription": "REDACTED",
+          "value": 0,
+          "free": false,
+          "health": 0,
+          "on": false,
+          "priority": 0
+        }
+      }
+    },
+    "launchBays": {
+      "Slot04_Size6": {
+        "SubSlot0": {
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "rebuilds": 0,
+          "loadout": "REDACTED",
+          "loadoutName": "REDACTED"
+        },
+        "SubSlot1": {
+          "name": "REDACTED",
+          "locName": "REDACTED",
+          "rebuilds": 0,
+          "loadout": "REDACTED",
+          "loadoutName": "REDACTED"
+        }
+      }
+    }
+  },
+  "suit": {
+    "name": "REDACTED",
+    "id": 0,
+    "suitId": 0,
+    "locName": "REDACTED",
+    "slots": [],
+    "state": {
+      "health": {
+        "hull": 0
+      }
+    }
+  },
+  "lastSystem": {
+    "id": 0,
+    "name": "REDACTED",
+    "REDACTED_FIELD_KEY_1": "REDACTED"
+  },
+  "lastStarport": {
+    "id": 0,
+    "services": {
+      "commodities": "REDACTED",
+      "carrierfuel": "REDACTED",
+      "socialspace": "REDACTED",
+      "shipyard": "REDACTED",
+      "refuel": "REDACTED",
+      "repair": "REDACTED",
+      "rearm": "REDACTED",
+      "outfitting": "REDACTED",
+      "blackmarket": "REDACTED",
+      "voucherredemption": "REDACTED",
+      "exploration": "REDACTED",
+      "bartender": "REDACTED",
+      "vistagenomics": "REDACTED",
+      "pioneersupplies": "REDACTED",
+      "carriermanagement": "REDACTED",
+      "stationmenu": "REDACTED",
+      "dock": "REDACTED",
+      "crewlounge": "REDACTED",
+      "engineer": "REDACTED",
+      "contacts": "REDACTED",
+      "registeringcolonisation": "REDACTED",
+      "livery": "REDACTED"
+    },
+    "name": "REDACTED",
+    "REDACTED_FIELD_KEY_1": "REDACTED",
+    "minorfaction": "REDACTED"
+  },
+  "squadron": {
+    "name": "REDACTED",
+    "tag": "REDACTED",
+    "rank": "REDACTED",
+    "joined": "REDACTED"
+  },
+  "ships": {
+    "REDACTED_KEY": {
+      "id": 0,
+      "name": "REDACTED",
+      "value": {
+        "hull": 0,
+        "modules": 0,
+        "cargo": 0,
+        "total": 0,
+        "unloaned": 0
+      },
+      "free": false,
+      "shipName": "REDACTED",
+      "shipID": "REDACTED",
+      "station": {
+        "id": 0,
+        "name": "REDACTED"
+      },
+      "starsystem": {
+        "id": 0,
+        "name": "REDACTED",
+        "systemaddress": 0
+      }
+    },
+    "REDACTED_KEY_2": {
+      "id": 0,
+      "name": "REDACTED",
+      "value": {
+        "hull": 0,
+        "modules": 0,
+        "cargo": 0,
+        "total": 0,
+        "unloaned": 0
+      },
+      "free": false,
+      "station": {
+        "id": 0,
+        "name": "REDACTED"
+      },
+      "starsystem": {
+        "id": 0,
+        "name": "REDACTED",
+        "systemaddress": 0
+      }
+    }
+  },
+  "loadouts": {
+    "REDACTED_KEY": {
+      "loadoutSlotId": 0,
+      "suit": {
+        "name": "REDACTED",
+        "suitId": 0,
+        "locName": "REDACTED"
+      },
+      "name": "REDACTED",
+      "slots": {
+        "BaseSuit": {
+          "name": "REDACTED",
+          "id": "REDACTED",
+          "weaponrackId": 0,
+          "locName": "REDACTED",
+          "locDescription": "REDACTED"
+        },
+        "EVA_Helmet": {
+          "name": "REDACTED",
+          "id": "REDACTED",
+          "weaponrackId": 0,
+          "locName": "REDACTED",
+          "locDescription": "REDACTED"
+        }
+      },
+      "id": 0
+    },
+    "REDACTED_KEY_2": {
+      "loadoutSlotId": 0,
+      "suit": {
+        "name": "REDACTED",
+        "suitId": 0,
+        "locName": "REDACTED"
+      },
+      "name": "REDACTED",
+      "slots": {
+        "REDACTED_KEY": {
+          "name": "REDACTED",
+          "id": 0,
+          "weaponrackId": 0,
+          "locName": "REDACTED",
+          "locDescription": "REDACTED"
+        }
+      }
+    },
+    "REDACTED_KEY_3": {
+      "loadoutSlotId": 0,
+      "suit": {
+        "name": "REDACTED",
+        "suitId": 0,
+        "locName": "REDACTED"
+      },
+      "name": "REDACTED",
+      "slots": {
+        "PrimaryWeapon1": {
+          "name": "REDACTED",
+          "id": 0,
+          "weaponrackId": 0,
+          "locName": "REDACTED",
+          "locDescription": "REDACTED"
+        },
+        "SecondaryWeapon": {
+          "name": "REDACTED",
+          "id": 0,
+          "weaponrackId": 0,
+          "locName": "REDACTED",
+          "locDescription": "REDACTED"
+        }
+      }
+    }
+  },
+  "loadout": {
+    "loadoutSlotId": 0,
+    "suit": {
+      "name": "REDACTED",
+      "suitId": 0,
+      "locName": "REDACTED"
+    },
+    "name": "REDACTED",
+    "slots": {
+      "PrimaryWeapon1": {
+        "name": "REDACTED",
+        "id": 0,
+        "weaponrackId": 0,
+        "locName": "REDACTED",
+        "locDescription": "REDACTED",
+        "health": 0,
+        "value": 0,
+        "free": false,
+        "slots": {
+          "Magazine": {
+            "name": "REDACTED",
+            "id": 0,
+            "weaponrackId": 0,
+            "locName": "REDACTED",
+            "locDescription": "REDACTED",
+            "health": 0,
+            "value": 0,
+            "free": false,
+            "slots": [],
+            "modifications": [
+              "REDACTED"
+            ]
+          },
+          "Optics": {
+            "name": "REDACTED",
+            "id": 0,
+            "weaponrackId": 0,
+            "locName": "REDACTED",
+            "locDescription": "REDACTED",
+            "health": 0,
+            "value": 0,
+            "free": false,
+            "slots": [],
+            "modifications": [
+              "REDACTED"
+            ]
+          },
+          "PaintJob": {
+            "name": "REDACTED",
+            "id": 0,
+            "weaponrackId": 0,
+            "locName": "REDACTED",
+            "locDescription": "REDACTED"
+          }
+        },
+        "modifications": [
+          "REDACTED"
+        ],
+        "ammo": {
+          "clip": 0,
+          "hopper": 0
+        }
+      },
+      "SecondaryWeapon": {
+        "name": "REDACTED",
+        "id": 0,
+        "weaponrackId": 0,
+        "locName": "REDACTED",
+        "locDescription": "REDACTED",
+        "health": 0,
+        "value": 0,
+        "free": false,
+        "slots": {
+          "Optics": {
+            "name": "REDACTED",
+            "id": 0,
+            "weaponrackId": 0,
+            "locName": "REDACTED",
+            "locDescription": "REDACTED",
+            "health": 0,
+            "value": 0,
+            "free": false,
+            "slots": [],
+            "modifications": [
+              "REDACTED"
+            ]
+          },
+          "PaintJob": {
+            "name": "REDACTED",
+            "id": 0,
+            "weaponrackId": 0,
+            "locName": "REDACTED",
+            "locDescription": "REDACTED"
+          }
+        },
+        "modifications": [
+          "REDACTED"
+        ],
+        "ammo": {
+          "clip": 0,
+          "hopper": 0
+        }
+      }
+    },
+    "state": {
+      "oxygenRemaining": 0,
+      "energy": 0
+    }
+  },
+  "suits": {
+    "REDACTED_KEY": {
+      "name": "REDACTED",
+      "id": 0,
+      "suitId": 0,
+      "locName": "REDACTED",
+      "slots": []
+    }
+  }
+}
