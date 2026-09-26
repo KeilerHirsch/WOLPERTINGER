@@ -135,32 +135,54 @@ package body Wolpertinger_State_Encoding is
          Fuel_Used := State.Fuel.Used;
       end if;
 
-      return Enc.Encode_Array (23)
-        & Enc.Encode_Unsigned (2)
-        & Enc.Encode_Bool (State.Bound)
-        & Enc.Encode_Byte_String (To_CBOR (Session))
-        & Encode_Text (FID)
-        & Enc.Encode_Unsigned (CBOR.UInt64 (Types.Galaxy_Realm'Pos (Realm)))
-        & Enc.Encode_Unsigned (CBOR.UInt64 (Save_Epoch))
-        & Enc.Encode_Bool (State.Has_Last_Cursor)
-        & Enc.Encode_Unsigned (CBOR.UInt64 (Last_Sequence))
-        & Enc.Encode_Unsigned (CBOR.UInt64 (Last_Ordinal))
-        & Enc.Encode_Unsigned (CBOR.UInt64 (Last_Message_Count))
-        & Enc.Encode_Byte_String (To_CBOR (Last_Digest))
-        & Enc.Encode_Bool (State.Location.Known)
-        & Enc.Encode_Unsigned (CBOR.UInt64 (Address))
-        & Encode_Text (Star_System)
-        & Enc.Encode_Unsigned (CBOR.UInt64 (Types.Source_Provenance'Pos (Location_Prov)))
-        & Enc.Encode_Unsigned (CBOR.UInt64 (State_Types.Freshness_State'Pos (Location_Fresh)))
-        & Enc.Encode_Bool (State.Fuel.Known)
-        & Enc.Encode_Unsigned (CBOR.UInt64 (Types.Source_Provenance'Pos (Fuel_Prov)))
-        & Enc.Encode_Unsigned (CBOR.UInt64 (State_Types.Freshness_State'Pos (Fuel_Fresh)))
-        & Enc.Encode_Array (3)
-        & Encode_Decimal (Position.X)
-        & Encode_Decimal (Position.Y)
-        & Encode_Decimal (Position.Z)
-        & Encode_Decimal (Fuel_Level)
-        & Encode_Decimal (Fuel_Used)
-        & Encode_Decimal (Jump_Distance);
+      declare
+         Base_Fields : constant CBOR.Byte_Array :=
+           Enc.Encode_Bool (State.Bound)
+           & Enc.Encode_Byte_String (To_CBOR (Session))
+           & Encode_Text (FID)
+           & Enc.Encode_Unsigned (CBOR.UInt64 (Types.Galaxy_Realm'Pos (Realm)))
+           & Enc.Encode_Unsigned (CBOR.UInt64 (Save_Epoch))
+           & Enc.Encode_Bool (State.Has_Last_Cursor)
+           & Enc.Encode_Unsigned (CBOR.UInt64 (Last_Sequence))
+           & Enc.Encode_Unsigned (CBOR.UInt64 (Last_Ordinal))
+           & Enc.Encode_Unsigned (CBOR.UInt64 (Last_Message_Count))
+           & Enc.Encode_Byte_String (To_CBOR (Last_Digest))
+           & Enc.Encode_Bool (State.Location.Known)
+           & Enc.Encode_Unsigned (CBOR.UInt64 (Address))
+           & Encode_Text (Star_System)
+           & Enc.Encode_Unsigned (CBOR.UInt64 (Types.Source_Provenance'Pos (Location_Prov)))
+           & Enc.Encode_Unsigned (CBOR.UInt64 (State_Types.Freshness_State'Pos (Location_Fresh)))
+           & Enc.Encode_Bool (State.Fuel.Known)
+           & Enc.Encode_Unsigned (CBOR.UInt64 (Types.Source_Provenance'Pos (Fuel_Prov)))
+           & Enc.Encode_Unsigned (CBOR.UInt64 (State_Types.Freshness_State'Pos (Fuel_Fresh)))
+           & Enc.Encode_Array (3)
+           & Encode_Decimal (Position.X)
+           & Encode_Decimal (Position.Y)
+           & Encode_Decimal (Position.Z)
+           & Encode_Decimal (Fuel_Level)
+           & Encode_Decimal (Fuel_Used)
+           & Encode_Decimal (Jump_Distance);
+      begin
+         if State.Commander_Vessel.Known then
+            return Enc.Encode_Array (32)
+              & Enc.Encode_Unsigned (3)
+              & Base_Fields
+              & Enc.Encode_Bool (True)
+              & Encode_Text (Types.Text_128 (State.Commander_Vessel.Data.Commander_Name_Value))
+              & Enc.Encode_Bool (State.Commander_Vessel.Data.Commander_Alive)
+              & Enc.Encode_Bool (State.Commander_Vessel.Data.Commander_Docked)
+              & Enc.Encode_Bool (State.Commander_Vessel.Data.Commander_On_Foot)
+              & Encode_Text (Types.Text_128 (State.Commander_Vessel.Data.Vessel_Name_Value))
+              & Enc.Encode_Bool (State.Commander_Vessel.Data.Ship_Alive)
+              & Enc.Encode_Unsigned
+                  (CBOR.UInt64 (Types.Source_Provenance'Pos (State.Commander_Vessel.Provenance)))
+              & Enc.Encode_Unsigned
+                  (CBOR.UInt64 (State_Types.Freshness_State'Pos (State.Commander_Vessel.Freshness)));
+         end if;
+
+         return Enc.Encode_Array (23)
+           & Enc.Encode_Unsigned (2)
+           & Base_Fields;
+      end;
    end Encode;
 end Wolpertinger_State_Encoding;

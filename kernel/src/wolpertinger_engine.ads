@@ -13,18 +13,22 @@ package Wolpertinger_Engine with SPARK_Mode is
    use type Types.Observation_Cursor;
    use type Types.Observation_Kind;
    use type Types.Source_Provenance;
+   use type Types.Commander_Vessel_Data;
 
    type Apply_Status is
-     (Applied,
+      (Applied,
       Idempotent,
       Sequence_Gap,
       Integrity_Fault,
-      Identity_Conflict);
+      Identity_Conflict,
+      Invalid_Observation);
 
    type Apply_Result is record
       Status        : Apply_Status := Sequence_Gap;
       Has_Jump_Fact : Boolean := False;
       Jump          : Facts.Jump_Fact;
+      Has_Commander_Vessel_Fact : Boolean := False;
+      Commander_Vessel          : Facts.Commander_Vessel_Fact;
    end record;
    procedure Apply
      (State       : in out State_Types.Kernel_State;
@@ -46,8 +50,20 @@ package Wolpertinger_Engine with SPARK_Mode is
            and then State.Fuel.Provenance = Observation.Provenance
            and then State.Fuel.Freshness = State_Types.Current))
        and then
+       (Result.Status /= Applied
+        or else Observation.Kind /= Types.Commander_Vessel
+        or else
+          (State.Commander_Vessel.Known
+           and then State.Commander_Vessel.Data = Observation.Commander_Vessel
+           and then State.Commander_Vessel.Provenance = Observation.Provenance
+           and then State.Commander_Vessel.Freshness = State_Types.Current))
+       and then
        (Result.Has_Jump_Fact =
           (Result.Status = Applied
-           and then Observation.Kind = Types.FSD_Jump));
+           and then Observation.Kind = Types.FSD_Jump))
+       and then
+       (Result.Has_Commander_Vessel_Fact =
+          (Result.Status = Applied
+           and then Observation.Kind = Types.Commander_Vessel));
 
 end Wolpertinger_Engine;

@@ -145,7 +145,7 @@ procedure Wolpertinger_Kernel_Tests is
          "oversize frame must be rejected at resource boundary");
    end Test_Oversize_Rejected_Before_Parse;
 begin
-   TIO.Put_Line ("WOLPERTINGER kernel protocol v1 tests");
+   TIO.Put_Line ("WOLPERTINGER kernel protocol v1/v2 tests");
    Test_Session_Bound;
    Test_FSD_Jump;
    Test_Oversize_Rejected_Before_Parse;

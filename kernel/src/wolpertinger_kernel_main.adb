@@ -105,6 +105,7 @@ procedure Wolpertinger_Kernel_Main is
          when Engine.Sequence_Gap       => return Protocol.Response_Sequence_Gap;
          when Engine.Integrity_Fault    => return Protocol.Response_Integrity_Fault;
          when Engine.Identity_Conflict  => return Protocol.Response_Identity_Conflict;
+         when Engine.Invalid_Observation => return Protocol.Response_Invalid_Message;
       end case;
    end To_Response_Status;
 
@@ -144,6 +145,7 @@ procedure Wolpertinger_Kernel_Main is
             begin
                Engine.Apply (State, Message.Observation, Result);
                Response.Kind := Protocol.Apply_Response;
+               Response.Protocol_Version := Message.Observation.Protocol_Version;
                Response.Status := To_Response_Status (Result.Status);
                Response.Epoch := Authority.Current_Epoch;
                Response.Role := Authority.Role;
@@ -152,6 +154,8 @@ procedure Wolpertinger_Kernel_Main is
                Response.State_Digest := Digest.State_Digest (State);
                Response.Has_Jump_Fact := Result.Has_Jump_Fact;
                Response.Jump := Result.Jump;
+               Response.Has_Commander_Vessel_Fact := Result.Has_Commander_Vessel_Fact;
+               Response.Commander_Vessel := Result.Commander_Vessel;
             end;
       end case;
 

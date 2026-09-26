@@ -26,6 +26,14 @@ package Wolpertinger_State with SPARK_Mode is
       Provenance : Provenance_Kind := Types.Unknown_Source;
       Freshness  : Freshness_State := Unknown;
    end record;
+
+   type Commander_Vessel_State is record
+      Known      : Boolean := False;
+      Data       : Types.Commander_Vessel_Data;
+      Provenance : Provenance_Kind := Types.Unknown_Source;
+      Freshness  : Freshness_State := Unknown;
+   end record;
+
    type Kernel_State is record
       Bound              : Boolean := False;
       Profile            : Types.Profile_Key;
@@ -37,6 +45,7 @@ package Wolpertinger_State with SPARK_Mode is
       Location           : Location_State;
       Fuel               : Fuel_State;
       Last_Jump_Distance : Types.Decimal_64;
+      Commander_Vessel   : Commander_Vessel_State;
    end record;
 
    function Same_Profile

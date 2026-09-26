@@ -21,4 +21,11 @@ package Wolpertinger_Facts with SPARK_Mode is
       Fuel_Freshness      : State_Types.Freshness_State := State_Types.Unknown;
    end record;
 
+   type Commander_Vessel_Fact is record
+      Cursor      : Types.Observation_Cursor;
+      Data        : Types.Commander_Vessel_Data;
+      Provenance  : Types.Source_Provenance := Types.Unknown_Source;
+      Freshness   : State_Types.Freshness_State := State_Types.Unknown;
+   end record;
+
 end Wolpertinger_Facts;

@@ -22,7 +22,8 @@ public sealed record KernelApplyResult(
     KernelRole Role,
     ObservationCursor? Cursor,
     FixedBytes32 StateDigest,
-    KernelJumpFact? JumpFact);
+    KernelJumpFact? JumpFact,
+    KernelCommanderVesselFact? CommanderVesselFact = null);
 
 public sealed class KernelProcessClient : IKernelProcessClient
 {
@@ -107,7 +108,8 @@ public sealed class KernelProcessClient : IKernelProcessClient
             response.Role,
             response.Cursor,
             response.StateDigest,
-            response.JumpFact);
+            response.JumpFact,
+            response.CommanderVesselFact);
     }
 
     private async Task<KernelResponse> ExchangeAsync(

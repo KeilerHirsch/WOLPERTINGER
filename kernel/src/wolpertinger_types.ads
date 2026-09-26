@@ -16,14 +16,15 @@ package Wolpertinger_Types is
    end record;
 
    type Galaxy_Realm is (Unknown, Live, Legacy, Beta_Or_PTS);
-   type Observation_Kind is (Session_Bound, FSD_Jump);
+   type Observation_Kind is (Session_Bound, FSD_Jump, Commander_Vessel);
    type Source_Provenance is
      (Unknown_Source,
       Local_Journal,
       Local_Status,
       Frontier_API,
       Community,
-      User_Entered);
+      User_Entered,
+      Sample);
 
    type Byte_16 is array (Positive range 1 .. 16) of Interfaces.Unsigned_8;
    type Byte_32 is array (Positive range 1 .. 32) of Interfaces.Unsigned_8;
@@ -37,6 +38,11 @@ package Wolpertinger_Types is
       Length : Natural range 0 .. 128 := 0;
       Data   : String (1 .. 128) := [others => Character'Val (0)];
    end record;
+
+   Commander_Name_Max_UTF8_Bytes : constant Positive := 128;
+   Vessel_Name_Max_UTF8_Bytes   : constant Positive := 128;
+   type Commander_Name is new Text_128;
+   type Vessel_Name is new Text_128;
 
    type Profile_Key is record
       FID        : Text_64;
@@ -59,7 +65,17 @@ package Wolpertinger_Types is
       Fuel_Level     : Decimal_64;
    end record;
 
+   type Commander_Vessel_Data is record
+      Commander_Name_Value  : Commander_Name := (others => <>);
+      Commander_Alive       : Boolean := False;
+      Commander_Docked      : Boolean := False;
+      Commander_On_Foot     : Boolean := False;
+      Vessel_Name_Value     : Vessel_Name := (others => <>);
+      Ship_Alive            : Boolean := False;
+   end record;
+
    type Observation is record
+      Protocol_Version     : Natural range 1 .. 2 := 1;
       Cursor              : Observation_Cursor;
       Evidence_Digest     : Byte_32 := [others => 0];
       Session_Id          : Byte_16 := [others => 0];
@@ -72,6 +88,7 @@ package Wolpertinger_Types is
       Message_Count       : Interfaces.Unsigned_16 := 1;
       Provenance          : Source_Provenance := Unknown_Source;
       Jump                : FSD_Jump_Data;
+      Commander_Vessel    : Commander_Vessel_Data;
    end record;
 
 end Wolpertinger_Types;

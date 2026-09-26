@@ -2,7 +2,9 @@ namespace Wolpertinger.Edge.Contracts;
 
 public static class KernelProtocol
 {
-    public const int Version = 1;
+    public const int Stage1Version = 1;
+    public const int R0Version = 2;
+    public const int Version = Stage1Version;
     public const int SetRoleMessageKind = 1;
     public const int ApplyObservationMessageKind = 2;
     public const int MaximumPayloadBytes = 65_536;
@@ -10,7 +12,7 @@ public static class KernelProtocol
 
 public enum GalaxyRealm : byte { Unknown = 0, Live = 1, Legacy = 2, BetaOrPts = 3 }
 public enum KernelRole : byte { Shadow = 0, Active = 1 }
-public enum ObservationKind : byte { SessionBound = 1, FsdJump = 2 }
+public enum ObservationKind : byte { SessionBound = 1, FsdJump = 2, CommanderVessel = 3 }
 public enum SourceProvenance : byte
 {
     Unknown = 0,
@@ -19,6 +21,7 @@ public enum SourceProvenance : byte
     FrontierApi = 3,
     Community = 4,
     UserEntered = 5,
+    Sample = 6,
 }
 
 public enum KernelResponseKind : byte { Role = 1, Apply = 2 }
@@ -61,4 +64,6 @@ public sealed record KernelResponse(
     KernelRole Role,
     ObservationCursor? Cursor,
     FixedBytes32 StateDigest,
-    KernelJumpFact? JumpFact);
+    KernelJumpFact? JumpFact,
+    KernelCommanderVesselFact? CommanderVesselFact = null,
+    int ProtocolVersion = KernelProtocol.Stage1Version);

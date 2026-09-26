@@ -26,8 +26,10 @@ public sealed record ObservationEnvelopeDraft(
     long CommitUnixMs,
     ushort MessageCount,
     ObservationPayload Payload,
-    SourceProvenance Provenance)
-{    public ObservationEnvelope ToEnvelope(ulong evidenceSequence, uint messageOrdinal = 0)
+    SourceProvenance Provenance,
+    int ProtocolVersion = KernelProtocol.Stage1Version)
+{
+    public ObservationEnvelope ToEnvelope(ulong evidenceSequence, uint messageOrdinal = 0)
         => new(
             new ObservationCursor(evidenceSequence, messageOrdinal),
             EvidenceDigest,
@@ -39,7 +41,8 @@ public sealed record ObservationEnvelopeDraft(
             CommitUnixMs,
             MessageCount,
             Payload,
-            Provenance);
+            Provenance,
+            ProtocolVersion);
 }
 
 public sealed record SessionIdentityResult(

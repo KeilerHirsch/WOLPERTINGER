@@ -21,6 +21,7 @@ procedure Test_Kernel_Messages is
    use type Interfaces.Unsigned_64;
    use type Control.Kernel_Role;
    use type Types.Observation_Kind;
+   use type Types.Source_Provenance;
    use type Protocol.Decode_Status;
    use type Protocol.Host_Message_Kind;
    use type SSE.Storage_Element;
@@ -95,6 +96,167 @@ procedure Test_Kernel_Messages is
       Assert.Assert (Decoded.Kind = Protocol.Apply_Observation_Message, "apply kind");
       Assert.Assert (Decoded.Observation.Kind = Types.FSD_Jump, "FSDJump observation kind");
    end Decode_Apply;
+
+   function Find_Text_Start
+     (Data : SSE.Storage_Array; Value : String) return SSE.Storage_Offset
+   is
+      Header : constant SSE.Storage_Element :=
+        SSE.Storage_Element (16#60# + Value'Length);
+   begin
+      for Offset in Data'First .. Data'Last - SSE.Storage_Offset (Value'Length) loop
+         if Data (Offset) = Header then
+            declare
+               Matches : Boolean := True;
+            begin
+               for I in Value'Range loop
+                  if Data (Offset + SSE.Storage_Offset (I - Value'First + 1))
+                    /= SSE.Storage_Element (Character'Pos (Value (I)))
+                  then
+                     Matches := False;
+                     exit;
+                  end if;
+               end loop;
+               if Matches then
+                  return Offset;
+               end if;
+            end;
+         end if;
+      end loop;
+      raise Constraint_Error with "synthetic CBOR text marker not found";
+   end Find_Text_Start;
+
+   function Multibyte_129 return String is
+      Result : String (1 .. 129) := [others => 'x'];
+   begin
+      for I in 0 .. 63 loop
+         Result (I * 2 + 1) := Character'Val (16#C3#);
+         Result (I * 2 + 2) := Character'Val (16#A9#);
+      end loop;
+      return Result;
+   end Multibyte_129;
+
+   function Replace_Text_With_129_Bytes
+     (Data : SSE.Storage_Array; Value, Replacement : String)
+      return SSE.Storage_Array
+   is
+      Start : constant SSE.Storage_Offset := Find_Text_Start (Data, Value);
+      Old_Length : constant SSE.Storage_Offset := SSE.Storage_Offset (Value'Length + 1);
+      New_Length : constant SSE.Storage_Offset := 131;
+      Result : SSE.Storage_Array
+        (Data'First .. Data'Last + New_Length - Old_Length);
+      Target : SSE.Storage_Offset := Result'First;
+   begin
+      if Replacement'Length /= 129 then
+         raise Constraint_Error with "test replacement must contain 129 bytes";
+      end if;
+      for Source in Data'First .. Start - 1 loop
+         Result (Target) := Data (Source);
+         Target := Target + 1;
+      end loop;
+      Result (Target) := 16#78#;
+      Result (Target + 1) := 16#81#;
+      for I in Replacement'Range loop
+         Result (Target + 2 + SSE.Storage_Offset (I - Replacement'First)) :=
+           SSE.Storage_Element (Character'Pos (Replacement (I)));
+      end loop;
+      Target := Target + New_Length;
+      for Source in Start + Old_Length .. Data'Last loop
+         Result (Target) := Data (Source);
+         Target := Target + 1;
+      end loop;
+      return Result;
+   end Replace_Text_With_129_Bytes;
+
+   function Replace_Text_With_Empty
+     (Data : SSE.Storage_Array; Value : String) return SSE.Storage_Array
+   is
+      Start : constant SSE.Storage_Offset := Find_Text_Start (Data, Value);
+      Old_Length : constant SSE.Storage_Offset := SSE.Storage_Offset (Value'Length + 1);
+      Result : SSE.Storage_Array (Data'First .. Data'Last - Value'Length);
+      Target : SSE.Storage_Offset := Result'First;
+   begin
+      for Source in Data'First .. Start - 1 loop
+         Result (Target) := Data (Source);
+         Target := Target + 1;
+      end loop;
+      Result (Target) := 16#60#;
+      Target := Target + 1;
+      for Source in Start + Old_Length .. Data'Last loop
+         Result (Target) := Data (Source);
+         Target := Target + 1;
+      end loop;
+      return Result;
+   end Replace_Text_With_Empty;
+
+   procedure Decode_Commander_Vessel is
+      Data : constant SSE.Storage_Array :=
+        Read_Hex ("../../fixtures/contracts/v2/commander-vessel.hex");
+      Decoded : constant Protocol.Decode_Result := Protocol.Decode_Observation (Data);
+   begin
+      Assert.Assert (Decoded.Status = Protocol.OK, "v2 Commander/Vessel must decode");
+      Assert.Assert
+        (Decoded.Observation.Kind = Types.Commander_Vessel,
+         "v2 Commander/Vessel kind");
+      Assert.Assert (Decoded.Observation.Protocol_Version = 2, "v2 version");
+      Assert.Assert
+        (Decoded.Observation.Provenance = Types.Sample,
+         "synthetic sample provenance");
+      Assert.Assert
+        (Decoded.Observation.Commander_Vessel.Commander_Name_Value.Length = 14,
+         "CommanderName must decode as bounded UTF-8 bytes");
+      Assert.Assert
+        (Decoded.Observation.Commander_Vessel.Vessel_Name_Value.Length = 11,
+         "VesselName must decode as bounded UTF-8 bytes");
+      Assert_Bytes_Equal
+        (Data, Protocol.Encode_Observation (Decoded.Observation),
+         "v2 Commander/Vessel canonical encoding");
+   end Decode_Commander_Vessel;
+
+   procedure Reject_Commander_Vessel_Bounds is
+      Data : constant SSE.Storage_Array :=
+        Read_Hex ("../../fixtures/contracts/v2/commander-vessel.hex");
+      Long_ASCII : constant String := [1 .. 129 => 'x'];
+      Long_Multibyte : constant String := Multibyte_129;
+      Long_Commander : constant Protocol.Decode_Result :=
+        Protocol.Decode_Observation
+          (Replace_Text_With_129_Bytes (Data, "Test commander", Long_ASCII));
+      Long_Vessel : constant Protocol.Decode_Result :=
+        Protocol.Decode_Observation
+          (Replace_Text_With_129_Bytes (Data, "Test vessel", Long_ASCII));
+      Long_Multibyte_Commander : constant Protocol.Decode_Result :=
+        Protocol.Decode_Observation
+          (Replace_Text_With_129_Bytes (Data, "Test commander", Long_Multibyte));
+      Long_Multibyte_Vessel : constant Protocol.Decode_Result :=
+        Protocol.Decode_Observation
+          (Replace_Text_With_129_Bytes (Data, "Test vessel", Long_Multibyte));
+      Empty_Commander : constant Protocol.Decode_Result :=
+        Protocol.Decode_Observation (Replace_Text_With_Empty (Data, "Test commander"));
+      Empty_Vessel : constant Protocol.Decode_Result :=
+        Protocol.Decode_Observation (Replace_Text_With_Empty (Data, "Test vessel"));
+   begin
+      Assert.Assert (Long_Commander.Status /= Protocol.OK, "129-byte CommanderName rejected");
+      Assert.Assert (Long_Vessel.Status /= Protocol.OK, "129-byte VesselName rejected");
+      Assert.Assert
+        (Long_Multibyte_Commander.Status /= Protocol.OK,
+         "129-byte multibyte CommanderName rejected");
+      Assert.Assert
+        (Long_Multibyte_Vessel.Status /= Protocol.OK,
+         "129-byte multibyte VesselName rejected");
+      Assert.Assert (Empty_Commander.Status /= Protocol.OK, "empty CommanderName rejected");
+      Assert.Assert (Empty_Vessel.Status /= Protocol.OK, "empty VesselName rejected");
+   end Reject_Commander_Vessel_Bounds;
+
+   procedure Reject_Malformed_Commander_Vessel_UTF8 is
+      Data : constant SSE.Storage_Array :=
+        Read_Hex ("../../fixtures/contracts/v2/commander-vessel.hex");
+      Start : constant SSE.Storage_Offset := Find_Text_Start (Data, "Test commander");
+      Malformed : SSE.Storage_Array (Data'Range) := Data;
+      Decoded : Protocol.Decode_Result;
+   begin
+      Malformed (Start + 1) := 16#FF#;
+      Decoded := Protocol.Decode_Observation (Malformed);
+      Assert.Assert (Decoded.Status /= Protocol.OK, "malformed CommanderName UTF-8 rejected");
+   end Reject_Malformed_Commander_Vessel_UTF8;
    procedure Encode_Role_Response is
       Expected : constant SSE.Storage_Array :=
         Read_Hex ("../../fixtures/contracts/v1/response-role-accepted.hex");
@@ -145,6 +307,9 @@ procedure Test_Kernel_Messages is
 begin
    Decode_Set_Role;
    Decode_Apply;
+   Decode_Commander_Vessel;
+   Reject_Commander_Vessel_Bounds;
+   Reject_Malformed_Commander_Vessel_UTF8;
    Encode_Role_Response;
    Encode_FSDJump_Response;
 end Test_Kernel_Messages;
