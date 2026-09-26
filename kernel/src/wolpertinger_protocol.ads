@@ -40,6 +40,7 @@ package Wolpertinger_Protocol is
       Response_Stale_Epoch);
 
    type Kernel_Response is record
+      Protocol_Version : Natural range 1 .. 2 := 1;
       Kind          : Kernel_Response_Kind := Apply_Response;
       Status        : Kernel_Response_Status := Response_Invalid_Message;
       Epoch         : Interfaces.Unsigned_64 := 0;
@@ -49,6 +50,8 @@ package Wolpertinger_Protocol is
       State_Digest  : Wolpertinger_Types.Byte_32 := [others => 0];
       Has_Jump_Fact : Boolean := False;
       Jump          : Wolpertinger_Facts.Jump_Fact;
+      Has_Commander_Vessel_Fact : Boolean := False;
+      Commander_Vessel : Wolpertinger_Facts.Commander_Vessel_Fact;
    end record;
 
    function Decode_Observation

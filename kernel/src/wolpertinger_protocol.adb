@@ -18,6 +18,9 @@ package body Wolpertinger_Protocol is
    use type Interfaces.Integer_64;
    use type Interfaces.Unsigned_8;
    use type Interfaces.Unsigned_16;
+   use type Types.Observation_Kind;
+   use type Types.Source_Provenance;
+   use type Wolpertinger_Facts.State_Types.Freshness_State;
 
    Schema_Error : exception;
 
@@ -113,6 +116,35 @@ package body Wolpertinger_Protocol is
         & Encode_Decimal (Value.Fuel_Level);
    end Encode_FSD_Jump;
 
+   function Encode_Commander_Vessel
+     (Value : Types.Commander_Vessel_Data) return CBOR.Byte_Array
+   is
+      Commander : constant CBOR.Byte_Array :=
+        To_CBOR (Types.Text_128 (Value.Commander_Name_Value));
+      Vessel : constant CBOR.Byte_Array :=
+        To_CBOR (Types.Text_128 (Value.Vessel_Name_Value));
+   begin
+      if Value.Commander_Name_Value.Length
+           not in 1 .. Types.Commander_Name_Max_UTF8_Bytes
+        or else Value.Vessel_Name_Value.Length
+           not in 1 .. Types.Vessel_Name_Max_UTF8_Bytes
+        or else not Dec.Is_Valid_UTF8 (Commander)
+        or else not Dec.Is_Valid_UTF8 (Vessel)
+      then
+         raise Constraint_Error with "invalid Commander/Vessel name bounds";
+      end if;
+
+      return Enc.Encode_Map (6)
+        & Enc.Encode_Unsigned (0)
+        & Enc.Encode_Text_String_UTF8 (Commander)
+        & Enc.Encode_Unsigned (1) & Enc.Encode_Bool (Value.Commander_Alive)
+        & Enc.Encode_Unsigned (2) & Enc.Encode_Bool (Value.Commander_Docked)
+        & Enc.Encode_Unsigned (3) & Enc.Encode_Bool (Value.Commander_On_Foot)
+        & Enc.Encode_Unsigned (4)
+        & Enc.Encode_Text_String_UTF8 (Vessel)
+        & Enc.Encode_Unsigned (5) & Enc.Encode_Bool (Value.Ship_Alive);
+   end Encode_Commander_Vessel;
+
    function Encode_Source_Time
      (Value : Types.Observation) return CBOR.Byte_Array is
    begin
@@ -131,6 +163,8 @@ package body Wolpertinger_Protocol is
             return Enc.Encode_Null;
          when Types.FSD_Jump =>
             return Encode_FSD_Jump (Value.Jump);
+         when Types.Commander_Vessel =>
+            return Encode_Commander_Vessel (Value.Commander_Vessel);
       end case;
    end Encode_Payload;
 
@@ -138,7 +172,15 @@ package body Wolpertinger_Protocol is
      (Value : Types.Observation) return CBOR.Byte_Array is
       FID : constant CBOR.Byte_Array := To_CBOR (Value.Profile.FID);
    begin
-      if Value.Profile.FID.Length not in 1 .. 64
+      if Value.Protocol_Version not in 1 .. 2
+        or else (Value.Protocol_Version = 1
+                 and then (Value.Kind = Types.Commander_Vessel
+                           or else Value.Provenance = Types.Sample))
+        or else (Value.Kind = Types.Commander_Vessel
+                 and then Value.Protocol_Version /= 2)
+        or else (Value.Kind = Types.Commander_Vessel
+                 and then Value.Provenance not in Types.Frontier_API | Types.Sample)
+        or else Value.Profile.FID.Length not in 1 .. 64
         or else not Dec.Is_Valid_UTF8 (FID)
         or else Value.Message_Count = 0
       then
@@ -146,7 +188,7 @@ package body Wolpertinger_Protocol is
       end if;
       return Enc.Encode_Map (13)
         & Enc.Encode_Unsigned (0) & Enc.Encode_Unsigned (2)
-        & Enc.Encode_Unsigned (1) & Enc.Encode_Unsigned (1)
+        & Enc.Encode_Unsigned (1) & Enc.Encode_Unsigned (CBOR.UInt64 (Value.Protocol_Version))
         & Enc.Encode_Unsigned (2) & Enc.Encode_Array (2)
         & Enc.Encode_Unsigned (CBOR.UInt64 (Value.Cursor.Evidence_Sequence))
         & Enc.Encode_Unsigned (CBOR.UInt64 (Value.Cursor.Message_Ordinal))
@@ -411,6 +453,36 @@ package body Wolpertinger_Protocol is
          Read_Decimal (Result.Observation.Jump.Fuel_Level);
       end Read_FSD_Jump;
 
+      procedure Read_Commander_Vessel is
+         Commander : Types.Text_128;
+         Vessel    : Types.Text_128;
+         Item      : CBOR.CBOR_Item;
+
+         procedure Read_Boolean (Value : out Boolean) is
+         begin
+            Take (Item);
+            if Item.Kind /= CBOR.MT_Simple_Value
+              or else Item.Float_Ref.Length /= 0
+              or else Item.SV_Value not in 20 | 21
+            then
+               raise Schema_Error;
+            end if;
+            Value := Item.SV_Value = 21;
+         end Read_Boolean;
+      begin
+         Expect_Map (6);
+         Expect_U64 (0); Read_Text_128 (Commander);
+         Expect_U64 (1); Read_Boolean (Result.Observation.Commander_Vessel.Commander_Alive);
+         Expect_U64 (2); Read_Boolean (Result.Observation.Commander_Vessel.Commander_Docked);
+         Expect_U64 (3); Read_Boolean (Result.Observation.Commander_Vessel.Commander_On_Foot);
+         Expect_U64 (4); Read_Text_128 (Vessel);
+         Expect_U64 (5); Read_Boolean (Result.Observation.Commander_Vessel.Ship_Alive);
+         Result.Observation.Commander_Vessel.Commander_Name_Value :=
+           Types.Commander_Name (Commander);
+         Result.Observation.Commander_Vessel.Vessel_Name_Value :=
+           Types.Vessel_Name (Vessel);
+      end Read_Commander_Vessel;
+
       procedure Read_Kind is
          Kind : Interfaces.Unsigned_64;
       begin
@@ -418,6 +490,11 @@ package body Wolpertinger_Protocol is
          case Kind is
             when 1 => Result.Observation.Kind := Types.Session_Bound;
             when 2 => Result.Observation.Kind := Types.FSD_Jump;
+            when 3 =>
+               if Result.Observation.Protocol_Version /= 2 then
+                  raise Schema_Error;
+               end if;
+               Result.Observation.Kind := Types.Commander_Vessel;
             when others => raise Schema_Error;
          end case;
       end Read_Kind;
@@ -443,6 +520,11 @@ package body Wolpertinger_Protocol is
             when 3 => Result.Observation.Provenance := Types.Frontier_API;
             when 4 => Result.Observation.Provenance := Types.Community;
             when 5 => Result.Observation.Provenance := Types.User_Entered;
+            when 6 =>
+               if Result.Observation.Protocol_Version /= 2 then
+                  raise Schema_Error;
+               end if;
+               Result.Observation.Provenance := Types.Sample;
             when others => raise Schema_Error;
          end case;
       end Read_Provenance;
@@ -464,7 +546,16 @@ package body Wolpertinger_Protocol is
          Reject_Unsupported_Items;
          Expect_Map (13);
          Expect_U64 (0); Expect_U64 (2);
-         Expect_U64 (1); Expect_U64 (1);
+         Expect_U64 (1);
+         declare
+            Version : Interfaces.Unsigned_64;
+         begin
+            Read_U64 (Version);
+            if Version not in 1 .. 2 then
+               raise Schema_Error;
+            end if;
+            Result.Observation.Protocol_Version := Natural (Version);
+         end;
          Expect_U64 (2); Expect_Array (2);
          Read_U64 (Result.Observation.Cursor.Evidence_Sequence);
          declare
@@ -486,8 +577,13 @@ package body Wolpertinger_Protocol is
          Expect_U64 (10); Read_Message_Count;
          Expect_U64 (11);
          case Result.Observation.Kind is
-            when Types.Session_Bound => Expect_Null;
-            when Types.FSD_Jump      => Read_FSD_Jump;
+            when Types.Session_Bound     => Expect_Null;
+            when Types.FSD_Jump          => Read_FSD_Jump;
+            when Types.Commander_Vessel  =>
+               if Result.Observation.Protocol_Version /= 2 then
+                  raise Schema_Error;
+               end if;
+               Read_Commander_Vessel;
          end case;
          Expect_U64 (12); Read_Provenance;
 
@@ -623,15 +719,54 @@ package body Wolpertinger_Protocol is
                   (Value.Fuel_Freshness)));
    end Encode_Jump_Fact;
 
+   function Encode_Commander_Vessel_Fact
+     (Value : Wolpertinger_Facts.Commander_Vessel_Fact) return CBOR.Byte_Array
+   is
+      Commander : constant CBOR.Byte_Array :=
+        To_CBOR (Types.Text_128 (Value.Data.Commander_Name_Value));
+      Vessel : constant CBOR.Byte_Array :=
+        To_CBOR (Types.Text_128 (Value.Data.Vessel_Name_Value));
+   begin
+      if Value.Data.Commander_Name_Value.Length
+           not in 1 .. Types.Commander_Name_Max_UTF8_Bytes
+        or else Value.Data.Vessel_Name_Value.Length
+           not in 1 .. Types.Vessel_Name_Max_UTF8_Bytes
+        or else not Dec.Is_Valid_UTF8 (Commander)
+        or else not Dec.Is_Valid_UTF8 (Vessel)
+        or else Value.Provenance not in Types.Frontier_API | Types.Sample
+        or else Value.Freshness /= Wolpertinger_Facts.State_Types.Current
+      then
+         raise Constraint_Error with "invalid Commander/Vessel fact";
+      end if;
+
+      return Enc.Encode_Array (9)
+        & Encode_Cursor (Value.Cursor)
+        & Enc.Encode_Text_String_UTF8 (Commander)
+        & Enc.Encode_Bool (Value.Data.Commander_Alive)
+        & Enc.Encode_Bool (Value.Data.Commander_Docked)
+        & Enc.Encode_Bool (Value.Data.Commander_On_Foot)
+        & Enc.Encode_Text_String_UTF8 (Vessel)
+        & Enc.Encode_Bool (Value.Data.Ship_Alive)
+        & Enc.Encode_Unsigned
+            (CBOR.UInt64 (Types.Source_Provenance'Pos (Value.Provenance)))
+        & Enc.Encode_Unsigned
+            (CBOR.UInt64
+               (Wolpertinger_Facts.State_Types.Freshness_State'Pos
+                  (Value.Freshness)));
+   end Encode_Commander_Vessel_Fact;
+
    function Encode_Response
      (Value : Kernel_Response) return CBOR.Byte_Array is
       Cursor_Value : constant CBOR.Byte_Array :=
         (if Value.Has_Cursor then Encode_Cursor (Value.Cursor) else Enc.Encode_Null);
       Jump_Value : constant CBOR.Byte_Array :=
         (if Value.Has_Jump_Fact then Encode_Jump_Fact (Value.Jump) else Enc.Encode_Null);
-   begin
-      return Enc.Encode_Map (7)
-        & Enc.Encode_Unsigned (0)
+      Commander_Vessel_Value : constant CBOR.Byte_Array :=
+        (if Value.Has_Commander_Vessel_Fact
+         then Encode_Commander_Vessel_Fact (Value.Commander_Vessel)
+         else Enc.Encode_Null);
+      Response_Fields : constant CBOR.Byte_Array :=
+        Enc.Encode_Unsigned (0)
         & Enc.Encode_Unsigned (CBOR.UInt64 (Kernel_Response_Kind'Pos (Value.Kind) + 1))
         & Enc.Encode_Unsigned (1)
         & Enc.Encode_Unsigned (CBOR.UInt64 (Kernel_Response_Status'Pos (Value.Status)))
@@ -646,6 +781,14 @@ package body Wolpertinger_Protocol is
         & Enc.Encode_Unsigned (6)
         & Enc.Encode_Unsigned
             (CBOR.UInt64 (Wolpertinger_Control.Kernel_Role'Pos (Value.Role)));
+   begin
+      if Value.Protocol_Version = 2 then
+         return Enc.Encode_Map (8)
+           & Response_Fields
+           & Enc.Encode_Unsigned (7)
+           & Commander_Vessel_Value;
+      end if;
+      return Enc.Encode_Map (7) & Response_Fields;
    end Encode_Response;
 
 end Wolpertinger_Protocol;

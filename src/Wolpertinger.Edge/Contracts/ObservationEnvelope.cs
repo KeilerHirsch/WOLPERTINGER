@@ -105,6 +105,25 @@ public sealed record FsdJumpPayload(
     Decimal64 FuelUsed,
     Decimal64 FuelLevel) : ObservationPayload;
 
+public sealed record CommanderVesselPayload(
+    CommanderName CommanderName,
+    bool CommanderAlive,
+    bool CommanderDocked,
+    bool CommanderOnFoot,
+    VesselName VesselName,
+    bool ShipAlive) : ObservationPayload;
+
+public sealed record KernelCommanderVesselFact(
+    ObservationCursor Cursor,
+    CommanderName CommanderName,
+    bool CommanderAlive,
+    bool CommanderDocked,
+    bool CommanderOnFoot,
+    VesselName VesselName,
+    bool ShipAlive,
+    SourceProvenance Provenance,
+    FreshnessState Freshness);
+
 public sealed record ObservationEnvelope(
     ObservationCursor Cursor,
     FixedBytes32 EvidenceDigest,
@@ -116,7 +135,5 @@ public sealed record ObservationEnvelope(
     long CommitUnixMs,
     ushort MessageCount,
     ObservationPayload Payload,
-    SourceProvenance Provenance)
-{
-    public int ProtocolVersion => KernelProtocol.Version;
-}
+    SourceProvenance Provenance,
+    int ProtocolVersion = KernelProtocol.Stage1Version);

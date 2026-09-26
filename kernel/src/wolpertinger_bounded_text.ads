@@ -10,6 +10,9 @@ package Wolpertinger_Bounded_Text with SPARK_Mode is
      with Pre  => Value'Length <= 128,
           Post => To_Text_128'Result.Length = Value'Length;
 
+   function Is_Valid_UTF8
+     (Value : Wolpertinger_Types.Text_128) return Boolean;
+
    function Equal
      (Left, Right : Wolpertinger_Types.Text_64) return Boolean;
 

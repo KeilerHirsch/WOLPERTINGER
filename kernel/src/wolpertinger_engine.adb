@@ -1,4 +1,8 @@
+with Wolpertinger_Bounded_Text;
+
 package body Wolpertinger_Engine with SPARK_Mode is
+
+   package Text renames Wolpertinger_Bounded_Text;
 
    use type Types.Galaxy_Realm;
 
@@ -18,6 +22,16 @@ package body Wolpertinger_Engine with SPARK_Mode is
          Fuel_Provenance     => State.Fuel.Provenance,
          Fuel_Freshness      => State.Fuel.Freshness);
    end Make_Jump_Fact;
+
+   function Make_Commander_Vessel_Fact
+     (State : State_Types.Kernel_State) return Facts.Commander_Vessel_Fact is
+   begin
+      return
+        (Cursor     => State.Last_Cursor,
+         Data       => State.Commander_Vessel.Data,
+         Provenance => State.Commander_Vessel.Provenance,
+         Freshness  => State.Commander_Vessel.Freshness);
+   end Make_Commander_Vessel_Fact;
 
    procedure Apply
      (State       : in out State_Types.Kernel_State;
@@ -74,6 +88,34 @@ package body Wolpertinger_Engine with SPARK_Mode is
             Candidate.Fuel.Provenance := Observation.Provenance;
             Candidate.Fuel.Freshness := State_Types.Current;
             Candidate.Last_Jump_Distance := Observation.Jump.Jump_Distance;
+
+         when Types.Commander_Vessel =>
+            if not State_Types.Identity_Matches (State, Observation) then
+               Result.Status := Identity_Conflict;
+               return;
+            end if;
+            if Observation.Provenance /= Types.Frontier_API
+              and then Observation.Provenance /= Types.Sample
+            then
+               Result.Status := Invalid_Observation;
+               return;
+            end if;
+            if Observation.Commander_Vessel.Commander_Name_Value.Length
+                 not in 1 .. Types.Commander_Name_Max_UTF8_Bytes
+              or else Observation.Commander_Vessel.Vessel_Name_Value.Length
+                 not in 1 .. Types.Vessel_Name_Max_UTF8_Bytes
+              or else not Text.Is_Valid_UTF8
+                (Types.Text_128 (Observation.Commander_Vessel.Commander_Name_Value))
+              or else not Text.Is_Valid_UTF8
+                (Types.Text_128 (Observation.Commander_Vessel.Vessel_Name_Value))
+            then
+               Result.Status := Invalid_Observation;
+               return;
+            end if;
+            Candidate.Commander_Vessel.Known := True;
+            Candidate.Commander_Vessel.Data := Observation.Commander_Vessel;
+            Candidate.Commander_Vessel.Provenance := Observation.Provenance;
+            Candidate.Commander_Vessel.Freshness := State_Types.Current;
       end case;
 
       Candidate.Has_Last_Cursor := True;
@@ -86,6 +128,9 @@ package body Wolpertinger_Engine with SPARK_Mode is
       if Observation.Kind = Types.FSD_Jump then
          Result.Has_Jump_Fact := True;
          Result.Jump := Make_Jump_Fact (State);
+      elsif Observation.Kind = Types.Commander_Vessel then
+         Result.Has_Commander_Vessel_Fact := True;
+         Result.Commander_Vessel := Make_Commander_Vessel_Fact (State);
       end if;
    end Apply;
 

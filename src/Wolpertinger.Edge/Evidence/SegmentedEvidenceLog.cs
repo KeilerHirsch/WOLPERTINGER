@@ -61,7 +61,7 @@ internal static class EvidenceRecordFormat
 
     public static bool IsValidSourceKind(ushort value)
         => value is >= (ushort)RawEvidenceSourceKind.LocalJournal
-            and <= (ushort)RawEvidenceSourceKind.UserEntered;
+            and <= (ushort)RawEvidenceSourceKind.Sample;
 }
 
 public sealed class SegmentedEvidenceLog : IAsyncDisposable

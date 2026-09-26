@@ -9,6 +9,7 @@ public enum RawEvidenceSourceKind : ushort
     FrontierApi = 3,
     Community = 4,
     UserEntered = 5,
+    Sample = 6,
 }
 
 public sealed record RawEvidenceInput(

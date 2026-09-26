@@ -17,6 +17,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\fixtures\contracts\v1\*.hex" Link="fixtures\contracts\v1\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\fixtures\contracts\v2\*.hex" Link="fixtures\contracts\v2\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\fixtures\capi\profile-r0-sanitized.json" Link="fixtures\capi\profile-r0-sanitized.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\fixtures\journal\*.jsonl" Link="fixtures\journal\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>

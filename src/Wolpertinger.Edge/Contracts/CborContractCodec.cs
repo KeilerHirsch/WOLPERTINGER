@@ -15,7 +15,7 @@ public static class CborContractCodec
         var writer = new CborWriter(CborConformanceMode.Canonical);
         writer.WriteStartMap(EnvelopeFieldCount);
         WriteKey(writer, 0); writer.WriteInt32(KernelProtocol.ApplyObservationMessageKind);
-        WriteKey(writer, 1); writer.WriteInt32(KernelProtocol.Version);
+        WriteKey(writer, 1); writer.WriteInt32(observation.ProtocolVersion);
         WriteKey(writer, 2); WriteCursor(writer, observation.Cursor);
         WriteKey(writer, 3); writer.WriteByteString(observation.EvidenceDigest.ToArray());
         WriteKey(writer, 4); writer.WriteByteString(observation.SessionId.ToArray());
@@ -57,7 +57,9 @@ public static class CborContractCodec
         try
         {
             var reader = new CborReader(encoded, CborConformanceMode.Canonical);
-            RequireLength(reader.ReadStartMap(), 7, "kernel response");
+            var responseFieldCount = reader.ReadStartMap();
+            if (responseFieldCount is not 7 and not 8)
+                throw Violation("Kernel response must use the v1 or v2 field set.");
             RequireKey(reader, 0); var kind = ReadKernelResponseKind(reader);
             RequireKey(reader, 1); var status = ReadKernelResponseStatus(reader);
             RequireKey(reader, 2); var epoch = reader.ReadUInt64();
@@ -65,13 +67,25 @@ public static class CborContractCodec
             RequireKey(reader, 4); var stateDigest = ReadFixed32(reader);
             RequireKey(reader, 5); var jumpFact = ReadNullableJumpFact(reader);
             RequireKey(reader, 6); var role = ReadKernelRole(reader);
+            var commanderVesselFact = responseFieldCount == 8
+                ? ReadNullableCommanderVesselFactAfterKey(reader)
+                : null;
             reader.ReadEndMap();
             if (reader.BytesRemaining != 0)
             {
                 throw Violation("Trailing bytes after kernel response.");
             }
 
-            return new KernelResponse(kind, status, epoch, role, cursor, stateDigest, jumpFact);
+            return new KernelResponse(
+                kind,
+                status,
+                epoch,
+                role,
+                cursor,
+                stateDigest,
+                jumpFact,
+                commanderVesselFact,
+                responseFieldCount == 8 ? KernelProtocol.R0Version : KernelProtocol.Stage1Version);
         }
         catch (InvalidDataException)
         {
@@ -96,7 +110,7 @@ public static class CborContractCodec
             RequireKey(reader, 0);
             RequireValue(reader.ReadInt32(), KernelProtocol.ApplyObservationMessageKind, "host message kind");
             RequireKey(reader, 1);
-            RequireValue(reader.ReadInt32(), KernelProtocol.Version, "protocol version");
+            var protocolVersion = ReadProtocolVersion(reader);
             RequireKey(reader, 2);
             var cursor = ReadCursor(reader);
             RequireKey(reader, 3);
@@ -106,7 +120,7 @@ public static class CborContractCodec
             RequireKey(reader, 5);
             var profile = ReadProfile(reader);
             RequireKey(reader, 6);
-            var kind = ReadObservationKind(reader);
+            var kind = ReadObservationKind(reader, protocolVersion);
             RequireKey(reader, 7);
             var sourceTime = ReadNullableInt64(reader);
             RequireKey(reader, 8);
@@ -116,9 +130,9 @@ public static class CborContractCodec
             RequireKey(reader, 10);
             var messageCount = ReadMessageCount(reader);
             RequireKey(reader, 11);
-            var payload = ReadPayload(reader, kind);
+            var payload = ReadPayload(reader, kind, protocolVersion);
             RequireKey(reader, 12);
-            var provenance = ReadProvenance(reader);
+            var provenance = ReadObservationProvenance(reader, protocolVersion);
             reader.ReadEndMap();
 
             if (reader.BytesRemaining != 0)
@@ -137,7 +151,8 @@ public static class CborContractCodec
                 commit,
                 messageCount,
                 payload,
-                provenance);
+                provenance,
+                protocolVersion);
             ValidateEnvelope(observation);
             return observation;
         }
@@ -190,9 +205,26 @@ public static class CborContractCodec
             case FsdJumpPayload jump when observation.Kind == ObservationKind.FsdJump:
                 WriteFsdJump(writer, jump);
                 break;
+            case CommanderVesselPayload commanderVessel
+                when observation.Kind == ObservationKind.CommanderVessel
+                    && observation.ProtocolVersion == KernelProtocol.R0Version:
+                WriteCommanderVessel(writer, commanderVessel);
+                break;
             default:
                 throw new InvalidDataException("Observation kind and payload disagree.");
         }
+    }
+
+    private static void WriteCommanderVessel(CborWriter writer, CommanderVesselPayload value)
+    {
+        writer.WriteStartMap(6);
+        WriteKey(writer, 0); writer.WriteTextString(value.CommanderName.Value);
+        WriteKey(writer, 1); writer.WriteBoolean(value.CommanderAlive);
+        WriteKey(writer, 2); writer.WriteBoolean(value.CommanderDocked);
+        WriteKey(writer, 3); writer.WriteBoolean(value.CommanderOnFoot);
+        WriteKey(writer, 4); writer.WriteTextString(value.VesselName.Value);
+        WriteKey(writer, 5); writer.WriteBoolean(value.ShipAlive);
+        writer.WriteEndMap();
     }
 
     private static void WriteFsdJump(CborWriter writer, FsdJumpPayload jump)
@@ -323,15 +355,30 @@ public static class CborContractCodec
         return FixedBytes16.FromBytes(bytes);
     }
 
-    private static ObservationKind ReadObservationKind(CborReader reader)
+    private static int ReadProtocolVersion(CborReader reader)
     {
         var value = reader.ReadInt32();
-        return value switch
-        {
-            1 => ObservationKind.SessionBound,
-            2 => ObservationKind.FsdJump,
-            _ => throw Violation("Unknown observation kind."),
-        };
+        if (value is not KernelProtocol.Stage1Version and not KernelProtocol.R0Version)
+            throw Violation("Unknown protocol version.");
+        return value;
+    }
+
+    private static SourceProvenance ReadObservationProvenance(CborReader reader, int protocolVersion)
+    {
+        var value = reader.ReadInt32();
+        var maximum = protocolVersion == KernelProtocol.Stage1Version ? 5 : 6;
+        if (value is < 0 || value > maximum)
+            throw Violation("Unknown source provenance for protocol version.");
+        return (SourceProvenance)value;
+    }
+
+    private static ObservationKind ReadObservationKind(CborReader reader, int protocolVersion)
+    {
+        var value = reader.ReadInt32();
+        var maximum = protocolVersion == KernelProtocol.Stage1Version ? 2 : 3;
+        if (value is < 1 || value > maximum)
+            throw Violation("Unknown observation kind for protocol version.");
+        return (ObservationKind)value;
     }
 
     private static long? ReadNullableInt64(CborReader reader)
@@ -367,7 +414,7 @@ public static class CborContractCodec
         return (SourceProvenance)value;
     }
 
-    private static ObservationPayload ReadPayload(CborReader reader, ObservationKind kind)
+    private static ObservationPayload ReadPayload(CborReader reader, ObservationKind kind, int protocolVersion)
     {
         if (kind == ObservationKind.SessionBound)
         {
@@ -380,7 +427,36 @@ public static class CborContractCodec
             return SessionBoundPayload.Instance;
         }
 
-        return ReadFsdJump(reader);
+        if (kind == ObservationKind.FsdJump)
+            return ReadFsdJump(reader);
+        if (kind == ObservationKind.CommanderVessel && protocolVersion == KernelProtocol.R0Version)
+            return ReadCommanderVessel(reader);
+        throw Violation("Observation kind and protocol version disagree.");
+    }
+
+    private static CommanderVesselPayload ReadCommanderVessel(CborReader reader)
+    {
+        RequireLength(reader.ReadStartMap(), 6, "Commander/Vessel payload");
+        RequireKey(reader, 0);
+        var commanderText = reader.ReadTextString();
+        if (!CommanderName.TryCreate(commanderText, out var commanderName))
+            throw Violation("CommanderName must contain valid UTF-8 in 1..128 bytes.");
+        RequireKey(reader, 1); var commanderAlive = reader.ReadBoolean();
+        RequireKey(reader, 2); var commanderDocked = reader.ReadBoolean();
+        RequireKey(reader, 3); var commanderOnFoot = reader.ReadBoolean();
+        RequireKey(reader, 4);
+        var vesselText = reader.ReadTextString();
+        if (!VesselName.TryCreate(vesselText, out var vesselName))
+            throw Violation("VesselName must contain valid UTF-8 in 1..128 bytes.");
+        RequireKey(reader, 5); var shipAlive = reader.ReadBoolean();
+        reader.ReadEndMap();
+        return new CommanderVesselPayload(
+            commanderName,
+            commanderAlive,
+            commanderDocked,
+            commanderOnFoot,
+            vesselName,
+            shipAlive);
     }
 
     private static FsdJumpPayload ReadFsdJump(CborReader reader)
@@ -455,6 +531,52 @@ public static class CborContractCodec
             fuelFreshness);
     }
 
+    private static KernelCommanderVesselFact? ReadNullableCommanderVesselFactAfterKey(CborReader reader)
+    {
+        RequireKey(reader, 7);
+        if (reader.PeekState() == CborReaderState.Null)
+        {
+            reader.ReadNull();
+            return null;
+        }
+
+        RequireLength(reader.ReadStartArray(), 9, "Commander/Vessel fact");
+        var cursor = ReadCursor(reader);
+        var commanderText = reader.ReadTextString();
+        if (!CommanderName.TryCreate(commanderText, out var commanderName))
+            throw Violation("Commander/Vessel fact has an invalid CommanderName.");
+        var commanderAlive = reader.ReadBoolean();
+        var commanderDocked = reader.ReadBoolean();
+        var commanderOnFoot = reader.ReadBoolean();
+        var vesselText = reader.ReadTextString();
+        if (!VesselName.TryCreate(vesselText, out var vesselName))
+            throw Violation("Commander/Vessel fact has an invalid VesselName.");
+        var shipAlive = reader.ReadBoolean();
+        var provenance = ReadCommanderVesselProvenance(reader);
+        var freshness = ReadFreshness(reader);
+        if (freshness != FreshnessState.Current)
+            throw Violation("Commander/Vessel fact must be current.");
+        reader.ReadEndArray();
+        return new KernelCommanderVesselFact(
+            cursor,
+            commanderName,
+            commanderAlive,
+            commanderDocked,
+            commanderOnFoot,
+            vesselName,
+            shipAlive,
+            provenance,
+            freshness);
+    }
+
+    private static SourceProvenance ReadCommanderVesselProvenance(CborReader reader)
+    {
+        var value = reader.ReadInt32();
+        if (value is not (int)SourceProvenance.FrontierApi and not (int)SourceProvenance.Sample)
+            throw Violation("Commander/Vessel fact has an unauthorized provenance.");
+        return (SourceProvenance)value;
+    }
+
     private static FreshnessState ReadFreshness(CborReader reader)
     {
         var value = reader.ReadInt32();
@@ -485,6 +607,8 @@ public static class CborContractCodec
 
     private static void ValidateEnvelope(ObservationEnvelope observation)
     {
+        if (observation.ProtocolVersion is not KernelProtocol.Stage1Version and not KernelProtocol.R0Version)
+            throw Violation("Unknown protocol version.");
         RequireUtf8Length(observation.Profile.Fid, 1, 64, "FID");
         if (observation.Profile.Realm is < GalaxyRealm.Unknown or > GalaxyRealm.BetaOrPts)
         {
@@ -496,10 +620,18 @@ public static class CborContractCodec
             throw Violation("MessageCount must be non-zero.");
         }
 
-        if (observation.Provenance is < SourceProvenance.Unknown or > SourceProvenance.UserEntered)
-        {
-            throw Violation("Unknown source provenance.");
-        }
+        var maximumKind = observation.ProtocolVersion == KernelProtocol.Stage1Version
+            ? ObservationKind.FsdJump
+            : ObservationKind.CommanderVessel;
+        if ((int)observation.Kind < (int)ObservationKind.SessionBound || (int)observation.Kind > (int)maximumKind)
+            throw Violation("Unknown observation kind for protocol version.");
+
+        var maximumProvenance = observation.ProtocolVersion == KernelProtocol.Stage1Version
+            ? SourceProvenance.UserEntered
+            : SourceProvenance.Sample;
+        if ((int)observation.Provenance < (int)SourceProvenance.Unknown
+            || (int)observation.Provenance > (int)maximumProvenance)
+            throw Violation("Unknown source provenance for protocol version.");
 
         switch (observation.Payload)
         {
@@ -513,6 +645,15 @@ public static class CborContractCodec
                 ValidateDecimal64(jump.JumpDistance);
                 ValidateDecimal64(jump.FuelUsed);
                 ValidateDecimal64(jump.FuelLevel);
+                break;
+            case CommanderVesselPayload commanderVessel
+                when observation.Kind == ObservationKind.CommanderVessel
+                    && observation.ProtocolVersion == KernelProtocol.R0Version:
+                if (observation.Provenance is not SourceProvenance.FrontierApi and not SourceProvenance.Sample)
+                    throw Violation("Commander/Vessel requires FrontierApi or Sample provenance.");
+                if (!commanderVessel.CommanderName.IsInitialized
+                    || !commanderVessel.VesselName.IsInitialized)
+                    throw Violation("CommanderName and VesselName must be initialized bounded UTF-8 values.");
                 break;
             default:
                 throw Violation("Observation kind and payload disagree.");
